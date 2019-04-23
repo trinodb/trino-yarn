@@ -1,12 +1,12 @@
-# Presto-yarn [![Build Status](https://travis-ci.org/prestodb/presto-yarn.svg?branch=master)](https://travis-ci.org/prestodb/presto-yarn)
+# Presto-yarn [![Build Status](https://travis-ci.org/prestosql/presto-yarn.svg?branch=master)](https://travis-ci.org/prestosql/presto-yarn)
 
 This project contains the code and needed to integrate Presto
-`Presto <https://prestodb.io/>`_ with Apache Hadoop YARN using
+`Presto <https://prestosql.io/>`_ with Apache Hadoop YARN using
 `Apache Slider <https://slider.incubator.apache.org/>`_
 
 Presto on YARN can be set up either manually using Apache Slider or via Ambari Slider Views if you are planning to use HDP distribution.
 
-The full documentation can be found [here](https://prestodb.io/presto-yarn/).
+The full documentation can be found [here](https://prestosql.github.io/presto-yarn/).
 
 ## Building the project
 
