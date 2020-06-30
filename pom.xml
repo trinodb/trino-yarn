@@ -23,13 +23,13 @@
         <version>9</version>
     </parent>
 
-    <groupId>com.teradata.presto-yarn</groupId>
+    <groupId>io.prestosql.presto-yarn</groupId>
     <artifactId>presto-yarn</artifactId>
     <version>1.6-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>presto-yarn</name>
     <description>Presto-YARN Integration</description>
-    <url>https://github.com/prestodb/presto-yarn</url>
+    <url>https://github.com/prestosql/presto-yarn</url>
 
     <licenses>
         <license>
@@ -39,16 +39,16 @@
     </licenses>
 
     <developers>
+        <!-- see git log -->
         <developer>
-            <name>Teradata Center for Hadoop</name>
-            <email>EB230060@teradata.com</email>
+            <name>Presto Community</name>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:prestodb/presto-yarn.git</connection>
-        <developerConnection>scm:git:git@github.com:prestodb/presto-yarn.git</developerConnection>
-        <url>git@github.com:prestodb/presto-yarn.git</url>
+        <connection>scm:git:git@github.com:prestosql/presto-yarn.git</connection>
+        <developerConnection>scm:git:git@github.com:prestosql/presto-yarn.git</developerConnection>
+        <url>git@github.com:prestosql/presto-yarn.git</url>
         <tag>HEAD</tag>
     </scm>
 
