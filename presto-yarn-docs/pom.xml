@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.teradata.presto-yarn</groupId>
+        <groupId>io.prestosql.presto-yarn</groupId>
         <artifactId>presto-yarn</artifactId>
         <version>1.6-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>

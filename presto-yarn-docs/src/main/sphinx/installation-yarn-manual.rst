@@ -15,7 +15,7 @@ and the configuration files and properties it uses.
 .. note::
 
   All example files referred to are from:
-  https://github.com/prestodb/presto-yarn/
+  https://github.com/prestosql/presto-yarn/
 
 -----
 

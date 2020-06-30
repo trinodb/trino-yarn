@@ -209,7 +209,7 @@ hostname.
     appropriately configured during runtime.
     
 
-18. ``site.global.event_listener_properties``: This allows you to configure Presto `Event Listener <https://prestodb.io/docs/current/develop/event-listener.html>`_. By default there is no listener configured. Since, Presto needs ``event-listener.properties`` file to be a list of options, one per line, this property must be a String representation of list of strings. Each entry of this list will be a new line in your ``event-listener.properties``. For example,
+18. ``site.global.event_listener_properties``: This allows you to configure Presto `Event Listener <https://prestosql.io/docs/current/develop/event-listener.html>`_. By default there is no listener configured. Since, Presto needs ``event-listener.properties`` file to be a list of options, one per line, this property must be a String representation of list of strings. Each entry of this list will be a new line in your ``event-listener.properties``. For example,
     below configuration will add the event listener named ``custom-event-listener`` with two custom properties ``custom-property1`` and ``custom-property2``.
     
 ::
