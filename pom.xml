@@ -61,11 +61,11 @@
     </modules>
 
     <properties>
-        <presto.version>0.167</presto.version>
+        <presto.version>332</presto.version>
         <slider.version>0.80.0-incubating</slider.version>
         <junit.version>4.11</junit.version>
         <tempto.version>1.4</tempto.version>
-        <hive-jdbc.version>0.13.1-2</hive-jdbc.version>
+        <hive-jdbc.version>0.13.1-6</hive-jdbc.version>
         <slf4j.version>1.7.5</slf4j.version>
 
         <!--  Plugin versions    -->

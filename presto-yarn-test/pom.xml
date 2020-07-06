@@ -106,7 +106,7 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>com.facebook.presto</groupId>
+                                    <groupId>io.prestosql</groupId>
                                     <artifactId>presto-server</artifactId>
                                     <version>${presto.version}</version>
                                     <type>tar.gz</type>
@@ -208,12 +208,12 @@
             <version>${tempto.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.facebook.presto</groupId>
+            <groupId>io.prestosql</groupId>
             <artifactId>presto-jdbc</artifactId>
             <version>${presto.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.facebook.presto.hive</groupId>
+            <groupId>io.prestosql.hive</groupId>
             <artifactId>hive-apache-jdbc</artifactId>
             <version>${hive-jdbc.version}</version>
         </dependency>
@@ -223,7 +223,7 @@
             <version>${slf4j.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.facebook.presto</groupId>
+            <groupId>io.prestosql</groupId>
             <artifactId>presto-ml</artifactId>
             <version>${presto.version}</version>
         </dependency>
