@@ -40,7 +40,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.facebook.presto</groupId>
+            <groupId>io.prestosql</groupId>
             <artifactId>presto-server</artifactId>
             <version>${presto.version}</version>
             <type>tar.gz</type>
