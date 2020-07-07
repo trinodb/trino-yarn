@@ -10,4 +10,6 @@ install:
 
 script:
  - ./mvnw test -v -B
+ - ./presto-yarn-test/bin/run_on_docker.sh cdh5
+ - ./presto-yarn-test/bin/run_on_docker.sh hdp2.3
 

@@ -2,26 +2,26 @@ version: '2'
 services:
   hadoop-master:
     hostname: hadoop-master
-    image: 'teradatalabs/presto-yarn-cdh5-hive-master:3'
+    image: 'prestodev/presto-yarn-cdh5-hive-master:30'
     privileged: true
 
   hadoop-slave1:
     hostname: 'hadoop-slave1'
-    image: 'teradatalabs/presto-yarn-cdh5-hive-slave:3'
+    image: 'prestodev/presto-yarn-cdh5-hive-slave:30'
     privileged: true
 
   hadoop-slave2:
     hostname: 'hadoop-slave2'
-    image: 'teradatalabs/presto-yarn-cdh5-hive-slave:3'
+    image: 'prestodev/presto-yarn-cdh5-hive-slave:30'
     privileged: true
 
   hadoop-slave3:
     hostname: 'hadoop-slave3'
-    image: 'teradatalabs/presto-yarn-cdh5-hive-slave:3'
+    image: 'prestodev/presto-yarn-cdh5-hive-slave:30'
     privileged: true
 
   runner:
-    image: 'teradatalabs/centos6-java8-oracle'
+    image: 'prestodev/centos6-java8-oracle'
     volumes:
       - '../../..:/workspace'
 
