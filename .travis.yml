@@ -6,8 +6,10 @@ jdk:
 dist: trusty
 
 install:
-  - ./mvnw package -v -B
+  - ./mvnw install -v -B
 
 script:
- - ./mvnw package -DskipTests -B
+ - ./mvnw test -v -B
+ - ./presto-yarn-test/bin/run_on_docker.sh cdh5
+ - ./presto-yarn-test/bin/run_on_docker.sh hdp2.3
 
