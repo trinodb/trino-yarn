@@ -6,8 +6,9 @@ jdk:
 dist: trusty
 
 install:
-  - ./mvnw package -v -B
+  - ./mvnw -v
+  - ./mvnw install -B -DskipTests
 
 script:
- - ./mvnw package -DskipTests -B
+ - ./mvnw test -B
 
