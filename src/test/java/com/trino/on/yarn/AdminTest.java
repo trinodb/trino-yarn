@@ -1,23 +1,24 @@
 package com.trino.on.yarn;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.ContentType;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
-import cn.hutool.json.JSONUtil;
 import org.junit.Test;
-
-import java.net.InetSocketAddress;
 
 public class AdminTest {
 
     @Test
     public void admin() {
-        try {
-            SimpleServer server = HttpUtil.createServer(0);
-            server.start();
-            InetSocketAddress address = server.getAddress();
-            System.out.println(JSONUtil.toJsonStr(address.getAddress().getHostAddress()));
-        } catch (Throwable t) {
-        }
+        String data = "{\"id\": 1, \"msg\": \"OK\"}";
+        SimpleServer server = HttpUtil.createServer(0);
+        server.addAction("/restTest", (request, response) ->
+                response.write("{\"id\": 1, \"msg\": \"OK\"}", ContentType.JSON.toString())
+        ).start();
+
+        String url = StrUtil.format("http://localhost:{}/restTest", server.getAddress().getPort());
+        String dataResponse = HttpUtil.get(url);
+        assert dataResponse.equals(data);
     }
 
 }
