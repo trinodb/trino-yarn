@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.ContentType;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
+import com.trino.on.yarn.entity.JobInfo;
 import org.junit.Test;
 
 public class AdminTest {
@@ -27,13 +28,24 @@ public class AdminTest {
 
         String localhostStr = Server.ip();
         System.out.println(localhostStr);
-        String url = StrUtil.format("http://{}:{}/restTest", localhostStr,server.getAddress().getPort());
+        String url = StrUtil.format("http://{}:{}/restTest", localhostStr, server.getAddress().getPort());
         String dataResponse = HttpUtil.post(url, data1);
         assert dataResponse.equals(data1);
 
-        url = StrUtil.format("http://{}:{}/restTest2", localhostStr,server.getAddress().getPort());
+        url = StrUtil.format("http://{}:{}/restTest2", localhostStr, server.getAddress().getPort());
         dataResponse = HttpUtil.post(url, data2);
         assert dataResponse.equals(data2);
     }
 
+    @Test
+    public void jobInfo() {
+        JobInfo jobInfo = new JobInfo();
+        jobInfo.setSql("select * from table");
+        jobInfo.setLibPath("/home/trino/lib");
+        jobInfo.setConfigPath("/home/trino/config");
+        jobInfo.setCatalogInfo("catalogInfo");
+        jobInfo.setIp("localhost");
+        jobInfo.setPort(8080);
+        System.out.println(jobInfo);
+    }
 }
