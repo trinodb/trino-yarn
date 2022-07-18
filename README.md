@@ -1,4 +1,4 @@
-# datax-on-yarn
+# trino-on-yarn
 
 trino-yarn可以让trino在yarn上运行
 
