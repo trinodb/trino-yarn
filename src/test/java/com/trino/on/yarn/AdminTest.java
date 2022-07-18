@@ -1,5 +1,6 @@
 package com.trino.on.yarn;
 
+import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.ContentType;
 import cn.hutool.http.HttpUtil;
@@ -19,11 +20,11 @@ public class AdminTest {
                 response.write("{\"id\": 2, \"msg\": \"OK\"}", ContentType.JSON.toString())
         ).start();
 
-        String url = StrUtil.format("http://localhost:{}/restTest", server.getAddress().getPort());
+        String url = StrUtil.format("http://{}:{}/restTest", NetUtil.LOCAL_IP,server.getAddress().getPort());
         String dataResponse = HttpUtil.get(url);
         assert dataResponse.equals(data1);
 
-        url = StrUtil.format("http://localhost:{}/restTest2", server.getAddress().getPort());
+        url = StrUtil.format("http://{}:{}/restTest2", NetUtil.LOCAL_IP,server.getAddress().getPort());
         dataResponse = HttpUtil.get(url);
         assert dataResponse.equals(data2);
     }

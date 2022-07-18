@@ -1,6 +1,7 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
@@ -282,6 +283,7 @@ public class Client {
         simpleServer = ClientServer.init();
         InetSocketAddress inetSocketAddress = ClientServer.init().getAddress();
         jobInfo.setPort(inetSocketAddress.getPort());
+        jobInfo.setIp(NetUtil.LOCAL_IP);
 
         if (cliParser.hasOption("shell_args")) {
             shellArgs = cliParser.getOptionValues("shell_args");
