@@ -15,7 +15,7 @@ public class TrinoExecutor {
     private static final Log LOG = LogFactory.getLog(TrinoExecutor.class);
 
     public static void run(JobInfo jobInfo, SimpleServer server) throws Throwable {
-        String clientRun = StrUtil.format("http://{}:{}/client/run", jobInfo.getIp(), jobInfo.getPort());
+        String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
         int trinoPort = NetUtil.getUsableLocalPort();
         String body = JSONUtil.createObj()
                 .putOpt("ip", Server.ip())

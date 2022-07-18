@@ -8,8 +8,6 @@ import cn.hutool.http.server.HttpServerResponse;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 
@@ -20,9 +18,10 @@ import java.io.IOException;
  * @date 2020/7/6
  */
 public class Server {
-
-    private static final Log LOG = LogFactory.getLog(Server.class);
-    public static Boolean masterFinish = Boolean.FALSE;
+    public static final String CLIENT_RUN = "/client/run";
+    public static final String MASTER_END = "/master/end";
+    public static Boolean MASTER_FINISH = Boolean.FALSE;
+    private static final String HTTP = "http://{}:{}";
 
     /**
      * 初始化Client接口
@@ -30,16 +29,16 @@ public class Server {
      */
     public static SimpleServer initClient() {
         SimpleServer server = HttpUtil.createServer(0);
-        server.addAction("/client/run", (request, response) -> {
+        server.addAction(CLIENT_RUN, (request, response) -> {
                             JSONObject clientRun = JSONUtil.parseObj(request.getBody());
                             if (!JSONUtil.isNull(clientRun) && clientRun.containsKey("start")
                                     && clientRun.getBool("start",false)) {
                                 String ip = clientRun.getStr("ip");
-                                String trinoPort = clientRun.getStr("trinoPort");
+                                Integer trinoPort = clientRun.getInt("trinoPort");
                                 // TODO:DUHANMIN 2022/7/18 查询trino jdbc逻辑
 
-                                String port = clientRun.getStr("port");
-                                String masterEnd = StrUtil.format("http://{}:{}/master/end", ip, port);
+                                Integer port = clientRun.getInt("port");
+                                String masterEnd = formatUrl(MASTER_END, ip, port);
                                 HttpUtil.get(masterEnd);
                             }else {
                                 throw new IOException("master run false");
@@ -57,8 +56,8 @@ public class Server {
      */
     public static SimpleServer initMaster() {
         SimpleServer server = HttpUtil.createServer(0);
-        server.addAction("/master/end", (request, response) -> {
-                            masterFinish = Boolean.TRUE;
+        server.addAction(MASTER_END, (request, response) -> {
+                            MASTER_FINISH = Boolean.TRUE;
                             responseWriteSuccess(response);
                         }
                 )
@@ -87,5 +86,7 @@ public class Server {
         return "";
     }
 
-
+    public static String formatUrl(String urlSuffix, String ip, int port) {
+        return StrUtil.format(HTTP + urlSuffix, ip, port);
+    }
 }

@@ -148,7 +148,7 @@ public class ApplicationMaster {
             // TODO:DUHANMIN 2022/7/18 这里启动trino Master节点
             //DataXExecutor.run(amMemory);
             TrinoExecutor.run(jobInfo,simpleServer);
-            while (!Server.masterFinish){
+            while (!Server.MASTER_FINISH){
                 Thread.sleep(500);
             }
             result = appMaster.finish();
