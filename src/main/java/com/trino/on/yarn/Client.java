@@ -1,6 +1,5 @@
 package com.trino.on.yarn;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -274,7 +273,7 @@ public class Client {
         String jobInfoStr = cliParser.getOptionValue("job_info");
         if (StrUtil.isNotBlank(jobInfoStr) && JSONUtil.isTypeJSONObject(jobInfoStr)){
             jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
-            if (BeanUtil.isEmpty(jobInfo, "sql", "ip", "port")) {
+            if (jobInfo == null) {
                 throw new IllegalArgumentException("job_info");
             }
         }else throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
