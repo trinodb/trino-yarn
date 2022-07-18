@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.trino.on.yarn;
 
 import cn.hutool.core.util.StrUtil;
@@ -14,12 +27,12 @@ public class AdminTest {
         String data1 = "{\"id\": 1, \"msg\": \"OK\"}";
         String data2 = "{\"id\": 2, \"msg\": \"OK\"}";
         SimpleServer server = HttpUtil.createServer(0);
-        server.addAction("/restTest", (request, response) ->{
+        server.addAction("/restTest", (request, response) -> {
                     assert request.getBody().equals(data1);
                     response.write("{\"id\": 1, \"msg\": \"OK\"}", ContentType.JSON.toString());
                 }
 
-        ).addAction("/restTest2", (request, response) ->{
+        ).addAction("/restTest2", (request, response) -> {
                     assert request.getBody().equals(data2);
                     response.write("{\"id\": 2, \"msg\": \"OK\"}", ContentType.JSON.toString());
                 }
@@ -36,7 +49,7 @@ public class AdminTest {
         dataResponse = HttpUtil.post(url, data2);
         assert dataResponse.equals(data2);
     }
-
+    
     @Test
     public void jobInfo() {
         JobInfo jobInfo = new JobInfo();

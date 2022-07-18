@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.trino.on.yarn;
 
 import cn.hutool.http.server.SimpleServer;
@@ -121,7 +134,7 @@ public class ApplicationMaster {
 
     private ConcurrentHashMap<ContainerId, Container> runningContainers = new ConcurrentHashMap<>();
 
-    //private YarnAppMasterHttpServer httpServer;
+    // private YarnAppMasterHttpServer httpServer;
 
     public static final int DEFAULT_APP_MASTER_TRACKING_URL_PORT = 8090;
 
@@ -147,7 +160,7 @@ public class ApplicationMaster {
             LOG.info("ApplicationMaster finish...");
             // TODO:DUHANMIN 2022/7/18 这里启动trino Master节点
             TrinoExecutor.run(jobInfo, simpleServer, amMemory);
-            while (!Server.MASTER_FINISH){
+            while (!Server.MASTER_FINISH) {
                 Thread.sleep(500);
             }
             result = appMaster.finish();
@@ -237,7 +250,7 @@ public class ApplicationMaster {
                     "No args specified for application master to initialize");
         }
 
-        //Check whether customer log4j.properties file exists
+        // Check whether customer log4j.properties file exists
         if (fileExist(Constants.LOG_4_J_PATH)) {
             try {
                 Log4jPropertyHelper.updateLog4jConfiguration(ApplicationMaster.class, Constants.LOG_4_J_PATH);
@@ -521,9 +534,94 @@ public class ApplicationMaster {
     }
 
     /**
+     * Setup the request that will be sent to the RM for the container ask.
+     *
+     * @return the setup ResourceRequest to be sent to RM
+     */
+    private ContainerRequest setupContainerAskForRM() {
+        // setup requirements for hosts
+        // using * as any host will do for the distributed shell app
+        // set the priority for the request
+        // TODO - what is the range for priority? how to decide?
+        Priority pri = Priority.newInstance(requestPriority);
+
+        // Set up resource type requirements
+        // For now, memory and CPU are supported so we set memory and cpu requirements
+        Resource capability = Resource.newInstance(containerMemory + memoryOverhead,
+                containerVirtualCores);
+
+        ContainerRequest request = new ContainerRequest(capability, null, null,
+                pri);
+        LOG.info("Requested container ask: " + request);
+        return request;
+    }
+
+    /**
+     * NMCallbackHandler
+     */
+    static class NMCallbackHandler implements NMClientAsync.CallbackHandler {
+
+        private ConcurrentMap<ContainerId, Container> containers = new ConcurrentHashMap<>();
+        private final ApplicationMaster applicationMaster;
+
+        NMCallbackHandler(ApplicationMaster applicationMaster) {
+            this.applicationMaster = applicationMaster;
+        }
+
+        void addContainer(ContainerId containerId, Container container) {
+            containers.putIfAbsent(containerId, container);
+        }
+
+        @Override
+        public void onContainerStopped(ContainerId containerId) {
+            LOG.info("Succeeded to stop Container " + containerId);
+            applicationMaster.runningContainers.remove(containerId);
+            containers.remove(containerId);
+        }
+
+        @Override
+        public void onContainerStatusReceived(ContainerId containerId,
+                                              ContainerStatus containerStatus) {
+            LOG.debug("Container Status: id=" + containerId + ", status=" + containerStatus);
+        }
+
+        @Override
+        public void onContainerStarted(ContainerId containerId, Map<String, ByteBuffer> allServiceResponse) {
+            LOG.debug("Succeeded to start Container " + containerId);
+            Container container = containers.get(containerId);
+            if (container != null) {
+                applicationMaster.nmClientAsync.getContainerStatusAsync(containerId, container.getNodeId());
+            }
+        }
+
+        @Override
+        public void onStartContainerError(ContainerId containerId, Throwable t) {
+            LOG.error("Failed to start Container " + containerId);
+            containers.remove(containerId);
+            applicationMaster.runningContainers.remove(containerId);
+            applicationMaster.numCompletedContainers.incrementAndGet();
+            applicationMaster.numFailedContainers.incrementAndGet();
+        }
+
+        @Override
+        public void onGetContainerStatusError(
+                ContainerId containerId, Throwable t) {
+            LOG.error("Failed to query the status of Container " + containerId);
+        }
+
+        @Override
+        public void onStopContainerError(ContainerId containerId, Throwable t) {
+            LOG.error("Failed to stop Container " + containerId);
+            applicationMaster.runningContainers.remove(containerId);
+            containers.remove(containerId);
+        }
+    }
+
+    /**
      * RMCallbackHandler
      */
     private class RMCallbackHandler implements AMRMClientAsync.CallbackHandler {
+
         @SuppressWarnings("unchecked")
         @Override
         public void onContainersCompleted(List<ContainerStatus> completedContainers) {
@@ -640,67 +738,6 @@ public class ApplicationMaster {
     }
 
     /**
-     * NMCallbackHandler
-     */
-    static class NMCallbackHandler implements NMClientAsync.CallbackHandler {
-
-        private ConcurrentMap<ContainerId, Container> containers = new ConcurrentHashMap<>();
-        private final ApplicationMaster applicationMaster;
-
-        NMCallbackHandler(ApplicationMaster applicationMaster) {
-            this.applicationMaster = applicationMaster;
-        }
-
-        void addContainer(ContainerId containerId, Container container) {
-            containers.putIfAbsent(containerId, container);
-        }
-
-        @Override
-        public void onContainerStopped(ContainerId containerId) {
-            LOG.info("Succeeded to stop Container " + containerId);
-            applicationMaster.runningContainers.remove(containerId);
-            containers.remove(containerId);
-        }
-
-        @Override
-        public void onContainerStatusReceived(ContainerId containerId,
-                                              ContainerStatus containerStatus) {
-            LOG.debug("Container Status: id=" + containerId + ", status=" + containerStatus);
-        }
-
-        @Override
-        public void onContainerStarted(ContainerId containerId, Map<String, ByteBuffer> allServiceResponse) {
-            LOG.debug("Succeeded to start Container " + containerId);
-            Container container = containers.get(containerId);
-            if (container != null) {
-                applicationMaster.nmClientAsync.getContainerStatusAsync(containerId, container.getNodeId());
-            }
-        }
-
-        @Override
-        public void onStartContainerError(ContainerId containerId, Throwable t) {
-            LOG.error("Failed to start Container " + containerId);
-            containers.remove(containerId);
-            applicationMaster.runningContainers.remove(containerId);
-            applicationMaster.numCompletedContainers.incrementAndGet();
-            applicationMaster.numFailedContainers.incrementAndGet();
-        }
-
-        @Override
-        public void onGetContainerStatusError(
-                ContainerId containerId, Throwable t) {
-            LOG.error("Failed to query the status of Container " + containerId);
-        }
-
-        @Override
-        public void onStopContainerError(ContainerId containerId, Throwable t) {
-            LOG.error("Failed to stop Container " + containerId);
-            applicationMaster.runningContainers.remove(containerId);
-            containers.remove(containerId);
-        }
-    }
-
-    /**
      * Thread to connect to the {@link ContainerManagementProtocol} and launch the container
      * that will execute the shell command.
      */
@@ -721,8 +758,8 @@ public class ApplicationMaster {
             this.containerListener = containerListener;
         }
 
-
         // TODO: 2022/7/18 这里启动Node节点
+
         /**
          * Connects to CM, sets up container launch context
          * for shell command and eventually dispatches the container
@@ -732,55 +769,32 @@ public class ApplicationMaster {
         public void run() {
             LOG.info("Setting up container launch container for containerId="
                     + container.getId());
-/*
-            Map<String, String> currentEnvs = System.getenv();
-            if (!currentEnvs.containsKey(Constants.JAR_FILE_PATH)) {
-                throw new RuntimeException(Constants.JAR_FILE_PATH
-                        + " not set in the environment.");
-            }
-            String frameworkPath = currentEnvs.get(Constants.JAR_FILE_PATH);
-
-            shellEnv.put("CLASSPATH", YarnHelper.buildClassPathEnv(conf));
-
-            // Set the local resources
-            Map<String, LocalResource> localResources = new HashMap<>(4);
-
-            try {
-                YarnHelper.addFrameworkToDistributedCache(frameworkPath, localResources, conf);
-            } catch (IOException e) {
-                Throwables.propagate(e);
-            }
-
-            // Set the necessary command to execute on the allocated container
-            Vector<CharSequence> vargs = new Vector<>(10);
-
-            // Set java executable command
-            vargs.add(System.getenv("JAVA_HOME") + "/bin/java");
-            // Set am memory size
-            vargs.add("-Xms" + containerMemory + "m");
-            vargs.add("-Xmx" + containerMemory + "m");
-            vargs.add(javaOpts);
-
-            // Set tmp dir
-            vargs.add("-Djava.io.tmpdir=$PWD/tmp");
-
-            // Set log4j configuration file
-            //vargs.add("-Dlog4j.configuration=" + Constants.NESTO_YARN_APPCONTAINER_LOG4J);
-
-            // Set class name
-            vargs.add(HolleWorld.class.getName());
-
-            // Set args for the shell command if any
-            vargs.add(shellArgs);
-            // Add log redirect params
-            vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout");
-            vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");
-
-            // Get final command
-            StringBuilder command = new StringBuilder();
-            for (CharSequence str : vargs) {
-                command.append(str).append(" ");
-            }*/
+            /*
+             * Map<String, String> currentEnvs = System.getenv(); if (!currentEnvs.containsKey(Constants.JAR_FILE_PATH)) { throw new RuntimeException(Constants.JAR_FILE_PATH +
+             * " not set in the environment."); } String frameworkPath = currentEnvs.get(Constants.JAR_FILE_PATH);
+             *
+             * shellEnv.put("CLASSPATH", YarnHelper.buildClassPathEnv(conf));
+             *
+             * // Set the local resources Map<String, LocalResource> localResources = new HashMap<>(4);
+             *
+             * try { YarnHelper.addFrameworkToDistributedCache(frameworkPath, localResources, conf); } catch (IOException e) { Throwables.propagate(e); }
+             *
+             * // Set the necessary command to execute on the allocated container Vector<CharSequence> vargs = new Vector<>(10);
+             *
+             * // Set java executable command vargs.add(System.getenv("JAVA_HOME") + "/bin/java"); // Set am memory size vargs.add("-Xms" + containerMemory + "m"); vargs.add("-Xmx" + containerMemory +
+             * "m"); vargs.add(javaOpts);
+             *
+             * // Set tmp dir vargs.add("-Djava.io.tmpdir=$PWD/tmp");
+             *
+             * // Set log4j configuration file //vargs.add("-Dlog4j.configuration=" + Constants.NESTO_YARN_APPCONTAINER_LOG4J);
+             *
+             * // Set class name vargs.add(HolleWorld.class.getName());
+             *
+             * // Set args for the shell command if any vargs.add(shellArgs); // Add log redirect params vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout"); vargs.add("2>" +
+             * ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");
+             *
+             * // Get final command StringBuilder command = new StringBuilder(); for (CharSequence str : vargs) { command.append(str).append(" "); }
+             */
 
             String command = System.getenv("JAVA_HOME") + "/bin/java -version";
             List<String> commands = new ArrayList<>();
@@ -801,29 +815,6 @@ public class ApplicationMaster {
             containerListener.addContainer(container.getId(), container);
             nmClientAsync.startContainerAsync(container, ctx);
         }
-    }
-
-    /**
-     * Setup the request that will be sent to the RM for the container ask.
-     *
-     * @return the setup ResourceRequest to be sent to RM
-     */
-    private ContainerRequest setupContainerAskForRM() {
-        // setup requirements for hosts
-        // using * as any host will do for the distributed shell app
-        // set the priority for the request
-        // TODO - what is the range for priority? how to decide?
-        Priority pri = Priority.newInstance(requestPriority);
-
-        // Set up resource type requirements
-        // For now, memory and CPU are supported so we set memory and cpu requirements
-        Resource capability = Resource.newInstance(containerMemory + memoryOverhead,
-                containerVirtualCores);
-
-        ContainerRequest request = new ContainerRequest(capability, null, null,
-                pri);
-        LOG.info("Requested container ask: " + request);
-        return request;
     }
 
     private void recoverExecutors(List<Container> previousAMRunningContainers) {

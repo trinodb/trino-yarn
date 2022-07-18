@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.trino.on.yarn;
 
 import cn.hutool.core.util.ArrayUtil;
@@ -105,10 +118,11 @@ public class Client {
     private String run;
 
     private SimpleServer simpleServer;
-/*
-    private String dataxJob = "";
-
-    private String dataxHomeArchivePath = "";*/
+    /*
+     * private String dataxJob = "";
+     *
+     * private String dataxHomeArchivePath = "";
+     */
 
     /**
      * @param args Command line arguments
@@ -255,28 +269,29 @@ public class Client {
         }
         appMasterJar = cliParser.getOptionValue("jar_path");
 
-        if (!cliParser.hasOption("run") || StrUtil.isBlank(cliParser.getOptionValue("run")) ) {
+        if (!cliParser.hasOption("run") || StrUtil.isBlank(cliParser.getOptionValue("run"))) {
             throw new IllegalArgumentException("run isBlank");
-        }else {
+        } else {
             run = cliParser.getOptionValue("run");
             if (run.equalsIgnoreCase("yarn-per")) {
                 // TODO:DUHANMIN 2022/7/18 后面加逻辑
-            } else if (run.equalsIgnoreCase("yarn-session")){
+            } else if (run.equalsIgnoreCase("yarn-session")) {
                 // TODO:DUHANMIN 2022/7/18 后面加逻辑
-            }
-            else throw new IllegalArgumentException("run isBlank/run is yarn-per or yarn-session");
+            } else
+                throw new IllegalArgumentException("run isBlank/run is yarn-per or yarn-session");
         }
 
         if (!cliParser.hasOption("job_info")) {
             throw new IllegalArgumentException("job_info isBlank");
         }
         String jobInfoStr = cliParser.getOptionValue("job_info");
-        if (StrUtil.isNotBlank(jobInfoStr) && JSONUtil.isTypeJSONObject(jobInfoStr)){
+        if (StrUtil.isNotBlank(jobInfoStr) && JSONUtil.isTypeJSONObject(jobInfoStr)) {
             jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
             if (jobInfo == null) {
                 throw new IllegalArgumentException("job_info");
             }
-        }else throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
+        } else
+            throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
 
         simpleServer = Server.initClient();
         InetSocketAddress inetSocketAddress = Server.initClient().getAddress();
@@ -419,13 +434,11 @@ public class Client {
         Path dst = addToLocalResources(fs, appMasterJar, Constants.APP_MASTER_JAR_PATH, appId.toString(), localResources, null);
 
         YarnHelper.addFrameworkToDistributedCache(dst.toUri().toString(), localResources, conf);
-  /*      if (null != dataxJob){
-            addToLocalResources(fs, dataxJob, Constants.DATAX_JOB, appId.toString(), localResources, null);
-        }
-
-        if (null != dataxHomeArchivePath) {
-            addToLocalResources(fs, dataxHomeArchivePath, Constants.DATAX,localResources);
-        }*/
+        /*
+         * if (null != dataxJob){ addToLocalResources(fs, dataxJob, Constants.DATAX_JOB, appId.toString(), localResources, null); }
+         *
+         * if (null != dataxHomeArchivePath) { addToLocalResources(fs, dataxHomeArchivePath, Constants.DATAX,localResources); }
+         */
 
         // Set the log4j properties if needed
         if (!log4jPropFile.isEmpty()) {
@@ -441,7 +454,7 @@ public class Client {
         }
 
         // Set the necessary security tokens as needed
-        //amContainer.setContainerTokens(containerToken);
+        // amContainer.setContainerTokens(containerToken);
 
         // Set the env variables to be setup in the env where the application master will be run
         LOG.info("Set the environment for the application master");
@@ -589,8 +602,7 @@ public class Client {
      * @throws YarnException
      * @throws IOException
      */
-    private boolean monitorApplication(ApplicationId appId)
-            throws YarnException, IOException {
+    private boolean monitorApplication(ApplicationId appId) throws YarnException, IOException {
 
         while (true) {
 
@@ -653,8 +665,7 @@ public class Client {
      * @throws YarnException
      * @throws IOException
      */
-    private void forceKillApplication(ApplicationId appId)
-            throws YarnException, IOException {
+    private void forceKillApplication(ApplicationId appId) throws YarnException, IOException {
         // TODO clarify whether multiple jobs with the same app id can be submitted and be running at
         // the same time.
         // If yes, can we kill a particular attempt only?
@@ -694,9 +705,9 @@ public class Client {
         Path dst = fs.makeQualified(new Path(path));
         FileStatus scFileStatus = fs.getFileStatus(dst);
         LocalResource scRsrc = LocalResource.newInstance(
-                        ConverterUtils.getYarnUrlFromURI(dst.toUri()),
-                        LocalResourceType.ARCHIVE, LocalResourceVisibility.APPLICATION,
-                        scFileStatus.getLen(), scFileStatus.getModificationTime());
+                ConverterUtils.getYarnUrlFromURI(dst.toUri()),
+                LocalResourceType.ARCHIVE, LocalResourceVisibility.APPLICATION,
+                scFileStatus.getLen(), scFileStatus.getModificationTime());
         localResources.put(name, scRsrc);
         return dst;
     }

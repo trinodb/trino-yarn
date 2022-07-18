@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.trino.on.yarn;
 
 import cn.hutool.core.net.NetUtil;
@@ -18,6 +31,7 @@ import java.io.IOException;
  * @date 2020/7/6
  */
 public class Server {
+
     public static final String CLIENT_RUN = "/client/run";
     public static final String MASTER_END = "/master/end";
     public static Boolean MASTER_FINISH = Boolean.FALSE;
@@ -30,22 +44,21 @@ public class Server {
     public static SimpleServer initClient() {
         SimpleServer server = HttpUtil.createServer(0);
         server.addAction(CLIENT_RUN, (request, response) -> {
-                            JSONObject clientRun = JSONUtil.parseObj(request.getBody());
-                            if (!JSONUtil.isNull(clientRun) && clientRun.containsKey("start")
-                                    && clientRun.getBool("start",false)) {
-                                String ip = clientRun.getStr("ip");
-                                Integer trinoPort = clientRun.getInt("trinoPort");
-                                // TODO:DUHANMIN 2022/7/18 查询trino jdbc逻辑
+                    JSONObject clientRun = JSONUtil.parseObj(request.getBody());
+                    if (!JSONUtil.isNull(clientRun) && clientRun.containsKey("start")
+                            && clientRun.getBool("start", false)) {
+                        String ip = clientRun.getStr("ip");
+                        Integer trinoPort = clientRun.getInt("trinoPort");
+                        // TODO:DUHANMIN 2022/7/18 查询trino jdbc逻辑
 
-                                Integer port = clientRun.getInt("port");
-                                String masterEnd = formatUrl(MASTER_END, ip, port);
-                                HttpUtil.get(masterEnd);
-                            }else {
-                                throw new IOException("master run false");
-                            }
-                            responseWriteSuccess(response);
-                        }
-                )
+                        Integer port = clientRun.getInt("port");
+                        String masterEnd = formatUrl(MASTER_END, ip, port);
+                        HttpUtil.get(masterEnd);
+                    } else {
+                        throw new IOException("master run false");
+                    }
+                    responseWriteSuccess(response);
+                })
                 .start();
         return server;
     }
@@ -57,27 +70,26 @@ public class Server {
     public static SimpleServer initMaster() {
         SimpleServer server = HttpUtil.createServer(0);
         server.addAction(MASTER_END, (request, response) -> {
-                            MASTER_FINISH = Boolean.TRUE;
-                            responseWriteSuccess(response);
-                        }
-                )
+                    MASTER_FINISH = Boolean.TRUE;
+                    responseWriteSuccess(response);
+                })
                 .start();
         return server;
     }
 
     private static void responseWriteSuccess(HttpServerResponse response) {
-        responseWrite(response,"{\"status\": 200}");
+        responseWrite(response, "{\"status\": 200}");
     }
 
     private static void responseWriteFail(HttpServerResponse response) {
-        responseWrite(response,"{\"status\": 0}");
+        responseWrite(response, "{\"status\": 0}");
     }
 
     private static void responseWrite(HttpServerResponse response, String data) {
         response.write(data, ContentType.JSON.toString());
     }
 
-    public static String ip(){
+    public static String ip() {
         for (String localIp : NetUtil.localIps()) {
             if (localIp.startsWith("10.")) {
                 return localIp;
