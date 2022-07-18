@@ -1,5 +1,6 @@
 package com.trino.on.yarn;
 
+import cn.hutool.core.net.NetUtil;
 import cn.hutool.http.ContentType;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.HttpServerResponse;
@@ -8,6 +9,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.net.InetSocketAddress;
+import java.util.LinkedHashSet;
 
 /**
  *
@@ -54,4 +56,15 @@ public class ClientServer {
     private static void responseWrite(HttpServerResponse response, String data) {
         response.write(data, ContentType.JSON.toString());
     }
+
+    public static String ip(){
+        for (String localIp : NetUtil.localIps()) {
+            if (localIp.startsWith("10.")) {
+                return localIp;
+            }
+        }
+        return "";
+    }
+
+
 }

@@ -283,7 +283,7 @@ public class Client {
         simpleServer = ClientServer.init();
         InetSocketAddress inetSocketAddress = ClientServer.init().getAddress();
         jobInfo.setPort(inetSocketAddress.getPort());
-        jobInfo.setIp(NetUtil.LOCAL_IP);
+        jobInfo.setIp(ClientServer.ip());
 
         if (cliParser.hasOption("shell_args")) {
             shellArgs = cliParser.getOptionValues("shell_args");

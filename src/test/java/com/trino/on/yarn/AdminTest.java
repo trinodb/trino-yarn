@@ -7,6 +7,8 @@ import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
 import org.junit.Test;
 
+import java.util.LinkedHashSet;
+
 public class AdminTest {
 
     @Test
@@ -20,11 +22,13 @@ public class AdminTest {
                 response.write("{\"id\": 2, \"msg\": \"OK\"}", ContentType.JSON.toString())
         ).start();
 
-        String url = StrUtil.format("http://{}:{}/restTest", NetUtil.LOCAL_IP,server.getAddress().getPort());
+        String localhostStr = ClientServer.ip();
+        System.out.println(localhostStr);
+        String url = StrUtil.format("http://{}:{}/restTest", localhostStr,server.getAddress().getPort());
         String dataResponse = HttpUtil.get(url);
         assert dataResponse.equals(data1);
 
-        url = StrUtil.format("http://{}:{}/restTest2", NetUtil.LOCAL_IP,server.getAddress().getPort());
+        url = StrUtil.format("http://{}:{}/restTest2", localhostStr,server.getAddress().getPort());
         dataResponse = HttpUtil.get(url);
         assert dataResponse.equals(data2);
     }
