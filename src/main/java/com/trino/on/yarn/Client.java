@@ -278,7 +278,7 @@ public class Client {
             if (BeanUtil.isEmpty(jobInfo, "sql", "ip", "port")) {
                 throw new IllegalArgumentException("job_info");
             }
-        }else throw new IllegalArgumentException("job_info isBlank/not JSONObject");
+        }else throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
 
         simpleServer = ClientServer.init();
         InetSocketAddress inetSocketAddress = ClientServer.init().getAddress();
