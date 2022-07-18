@@ -21,7 +21,7 @@
         <hadoop.version>3.2.1</hadoop.version>
         <lombok.version>1.18.20</lombok.version>
         <hutool.version>5.8.4</hutool.version>
-        <lang3.version>3.11</lang3.version>
+        <trino.version>363</trino.version>
     </properties>
 
     <dependencies>
@@ -46,6 +46,19 @@
             <scope>compile</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-jdbc</artifactId>
+            <version>${trino.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

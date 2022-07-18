@@ -1,7 +1,6 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
@@ -262,9 +261,9 @@ public class Client {
         }else {
             run = cliParser.getOptionValue("run");
             if (run.equalsIgnoreCase("yarn-per")) {
-                // TODO: 2022/7/18 后面加逻辑
+                // TODO:DUHANMIN 2022/7/18 后面加逻辑
             } else if (run.equalsIgnoreCase("yarn-session")){
-                // TODO: 2022/7/18 后面加逻辑
+                // TODO:DUHANMIN 2022/7/18 后面加逻辑
             }
             else throw new IllegalArgumentException("run isBlank/run is yarn-per or yarn-session");
         }
@@ -278,12 +277,12 @@ public class Client {
             if (BeanUtil.isEmpty(jobInfo, "sql", "ip", "port")) {
                 throw new IllegalArgumentException("job_info");
             }
-        }else throw new IllegalArgumentException("job_info isBlank/not JSONObject");
+        }else throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
 
-        simpleServer = ClientServer.init();
-        InetSocketAddress inetSocketAddress = ClientServer.init().getAddress();
+        simpleServer = Server.initClient();
+        InetSocketAddress inetSocketAddress = Server.initClient().getAddress();
         jobInfo.setPort(inetSocketAddress.getPort());
-        jobInfo.setIp(ClientServer.ip());
+        jobInfo.setIp(Server.ip());
 
         if (cliParser.hasOption("shell_args")) {
             shellArgs = cliParser.getOptionValues("shell_args");

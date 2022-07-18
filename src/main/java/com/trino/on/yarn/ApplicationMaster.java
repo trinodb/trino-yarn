@@ -1,7 +1,10 @@
 package com.trino.on.yarn;
 
+import cn.hutool.http.server.SimpleServer;
+import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.trino.on.yarn.constant.Constants;
+import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
@@ -126,6 +129,10 @@ public class ApplicationMaster {
 
     private static int amMemory = 128;
 
+    private JobInfo jobInfo;
+
+    private SimpleServer simpleServer;
+
     public static void main(String[] args) {
         boolean result = false;
         try {
@@ -137,8 +144,11 @@ public class ApplicationMaster {
             }
             appMaster.run();
             LOG.info("ApplicationMaster finish...");
-            // TODO: 2022/7/18 这里启动Master节点
+            // TODO:DUHANMIN 2022/7/18 这里启动trino Master节点
             //DataXExecutor.run(amMemory);
+            while (!Server.masterFinish){
+                Thread.sleep(500);
+            }
             result = appMaster.finish();
             LOG.info("ApplicationMaster finish");
         } catch (Throwable t) {
@@ -245,10 +255,15 @@ public class ApplicationMaster {
         }
 
         amMemory = Integer.parseInt(cliParser.getOptionValue("master_memory", "128"));
+
         if (amMemory < 0) {
             throw new IllegalArgumentException("Invalid memory specified for application master, exiting."
                     + " Specified memory=" + amMemory);
         }
+
+        jobInfo = JSONUtil.toBean(cliParser.getOptionValue("job_info"), JobInfo.class);
+
+        simpleServer = Server.initMaster();
 
         Map<String, String> envs = System.getenv();
 
