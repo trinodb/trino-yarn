@@ -14,6 +14,7 @@ public class TrinoExecutor {
     private static final Log LOG = LogFactory.getLog(TrinoExecutor.class);
 
     public static void run(JobInfo jobInfo, SimpleServer server) throws Throwable {
+        // TODODUHANMIN: 2022/7/18 trino 启动逻辑
         String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
         int trinoPort = NetUtil.getUsableLocalPort();
         String body = JSONUtil.createObj()

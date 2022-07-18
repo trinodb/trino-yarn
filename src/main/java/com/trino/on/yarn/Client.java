@@ -1,6 +1,7 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
@@ -10,7 +11,6 @@ import com.trino.on.yarn.util.Log4jPropertyHelper;
 import com.trino.on.yarn.util.YarnHelper;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -434,11 +434,11 @@ public class Client {
         }
 
         if (shellArgs.length > 0) {
-            addToLocalResources(fs, null, Constants.SHELL_ARGS_PATH, appId.toString(),localResources, StringUtils.join(shellArgs, " "));
+            addToLocalResources(fs, null, Constants.SHELL_ARGS_PATH, appId.toString(), localResources, ArrayUtil.join(shellArgs, " "));
         }
 
         if (javaOpts.length > 0) {
-            addToLocalResources(fs, null, Constants.JAVA_OPTS_PATH, appId.toString(), localResources, StringUtils.join(javaOpts, " "));
+            addToLocalResources(fs, null, Constants.JAVA_OPTS_PATH, appId.toString(), localResources, ArrayUtil.join(javaOpts, " "));
         }
 
         // Set the necessary security tokens as needed
