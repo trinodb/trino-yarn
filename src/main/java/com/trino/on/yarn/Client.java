@@ -2,8 +2,6 @@ package com.trino.on.yarn;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.ContentType;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.constant.Constants;
@@ -38,6 +36,7 @@ import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -105,6 +104,8 @@ public class Client {
     private JobInfo jobInfo;
 
     private String run;
+
+    private SimpleServer simpleServer;
 /*
     private String dataxJob = "";
 
@@ -141,22 +142,6 @@ public class Client {
         LOG.error("Application failed");
         System.exit(2);
     }
-
-    public static void admin() {
-
-        SimpleServer server = HttpUtil.createServer(0);
-        server.addAction("/m", (request, response) ->
-                response.write("{\"id\": 1, \"msg\": \"OK\"}", ContentType.JSON.toString())
-        ).start();
-
-        try {
-            HttpUtil.createServer(8888).start();
-        } catch (Throwable t) {
-            LOG.fatal("Error running Client", t);
-            System.exit(1);
-        }
-    }
-
 
     /**
      */
@@ -271,15 +256,16 @@ public class Client {
         }
         appMasterJar = cliParser.getOptionValue("jar_path");
 
-        if (!cliParser.hasOption("run")) {
+        if (!cliParser.hasOption("run") || StrUtil.isBlank(cliParser.getOptionValue("run")) ) {
             throw new IllegalArgumentException("run isBlank");
-        }
-
-        run = cliParser.getOptionValue("run");
-        if (StrUtil.isNotBlank(run) && (run.equalsIgnoreCase("yarn-per") || run.equalsIgnoreCase("yarn-session"))) {
-            run = run.toLowerCase();
         }else {
-            throw new IllegalArgumentException("run isBlank/run is yarn-per or yarn-session");
+            run = cliParser.getOptionValue("run");
+            if (run.equalsIgnoreCase("yarn-per")) {
+                // TODO: 2022/7/18 后面加逻辑
+            } else if (run.equalsIgnoreCase("yarn-session")){
+                // TODO: 2022/7/18 后面加逻辑
+            }
+            else throw new IllegalArgumentException("run isBlank/run is yarn-per or yarn-session");
         }
 
         if (!cliParser.hasOption("job_info")) {
@@ -288,11 +274,14 @@ public class Client {
         String jobInfoStr = cliParser.getOptionValue("job_info");
         if (StrUtil.isNotBlank(jobInfoStr) && JSONUtil.isTypeJSONObject(jobInfoStr)){
             jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
-            if (BeanUtil.isEmpty(jobInfo, "sql", "url")){
+            if (BeanUtil.isEmpty(jobInfo, "sql", "ip", "port")) {
                 throw new IllegalArgumentException("job_info");
             }
         }else throw new IllegalArgumentException("job_info isBlank/not JSONObject");
 
+        simpleServer = ClientServer.init();
+        InetSocketAddress inetSocketAddress = ClientServer.init().getAddress();
+        jobInfo.setPort(inetSocketAddress.getPort());
 
         if (cliParser.hasOption("shell_args")) {
             shellArgs = cliParser.getOptionValues("shell_args");

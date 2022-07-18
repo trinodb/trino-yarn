@@ -10,7 +10,8 @@ public class JobInfo {
     private String libPath;
     private String configPath;
     private String catalogInfo;
-    private String url;
+    private String ip;
+    private int port;
 
     public JSONObject toJson() {
         return JSONUtil.parseObj(this);
