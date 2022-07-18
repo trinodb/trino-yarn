@@ -1,6 +1,11 @@
 package com.trino.on.yarn;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.constant.Constants;
+import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
 import com.trino.on.yarn.util.YarnHelper;
 import org.apache.commons.cli.*;
@@ -95,12 +100,13 @@ public class Client {
 
     private int memoryOverhead = 50;
 
-    /**
-     * Application datax jar file
-     */
+    private JobInfo jobInfo;
+
+    private String run;
+/*
     private String dataxJob = "";
 
-    private String dataxHomeArchivePath = "";
+    private String dataxHomeArchivePath = "";*/
 
     /**
      * @param args Command line arguments
@@ -133,6 +139,16 @@ public class Client {
         LOG.error("Application failed");
         System.exit(2);
     }
+
+    public static void admin() {
+        try {
+            HttpUtil.createServer(8888).start();
+        } catch (Throwable t) {
+            LOG.fatal("Error running Client", t);
+            System.exit(1);
+        }
+    }
+
 
     /**
      */
@@ -247,15 +263,28 @@ public class Client {
         }
         appMasterJar = cliParser.getOptionValue("jar_path");
 
-        if (!cliParser.hasOption("datax_job")) {
-            throw new IllegalArgumentException("No datax_job file path specified for application master");
+        if (!cliParser.hasOption("run")) {
+            throw new IllegalArgumentException("run isBlank");
         }
-        dataxJob = cliParser.getOptionValue("datax_job");
 
-        if (!cliParser.hasOption("datax_home_hdfs")) {
-            throw new IllegalArgumentException("No datax_home_hdfs file path specified for application master");
+        run = cliParser.getOptionValue("run");
+        if (StrUtil.isNotBlank(run) && (run.equalsIgnoreCase("yarn-per") || run.equalsIgnoreCase("yarn-session"))) {
+            run = run.toLowerCase();
+        }else {
+            throw new IllegalArgumentException("run isBlank/run is yarn-per or yarn-session");
         }
-        dataxHomeArchivePath = cliParser.getOptionValue("datax_home_hdfs");
+
+        if (!cliParser.hasOption("job_info")) {
+            throw new IllegalArgumentException("job_info isBlank");
+        }
+        String jobInfoStr = cliParser.getOptionValue("job_info");
+        if (StrUtil.isNotBlank(jobInfoStr) && JSONUtil.isTypeJSONObject(jobInfoStr)){
+            jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
+            if (BeanUtil.isEmpty(jobInfo, "sql", "url")){
+                throw new IllegalArgumentException("job_info");
+            }
+        }else throw new IllegalArgumentException("job_info isBlank/not JSONObject");
+
 
         if (cliParser.hasOption("shell_args")) {
             shellArgs = cliParser.getOptionValues("shell_args");
@@ -393,14 +422,13 @@ public class Client {
         Path dst = addToLocalResources(fs, appMasterJar, Constants.APP_MASTER_JAR_PATH, appId.toString(), localResources, null);
 
         YarnHelper.addFrameworkToDistributedCache(dst.toUri().toString(), localResources, conf);
-
-        if (null != dataxJob){
+  /*      if (null != dataxJob){
             addToLocalResources(fs, dataxJob, Constants.DATAX_JOB, appId.toString(), localResources, null);
         }
 
         if (null != dataxHomeArchivePath) {
             addToLocalResources(fs, dataxHomeArchivePath, Constants.DATAX,localResources);
-        }
+        }*/
 
         // Set the log4j properties if needed
         if (!log4jPropFile.isEmpty()) {
@@ -468,6 +496,7 @@ public class Client {
         vargs.add("--num_containers " + numContainers);
         vargs.add("--priority " + shellCmdPriority);
         vargs.add("--master_memory " + this.amMemory);
+        vargs.add("--job_info " + jobInfo.toString());
 
         for (Map.Entry<String, String> entry : shellEnv.entrySet()) {
             vargs.add("--shell_env " + entry.getKey() + "=" + entry.getValue());
