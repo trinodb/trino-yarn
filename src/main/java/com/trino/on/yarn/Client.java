@@ -2,7 +2,9 @@ package com.trino.on.yarn;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.ContentType;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.constant.Constants;
 import com.trino.on.yarn.entity.JobInfo;
@@ -141,6 +143,12 @@ public class Client {
     }
 
     public static void admin() {
+
+        SimpleServer server = HttpUtil.createServer(0);
+        server.addAction("/m", (request, response) ->
+                response.write("{\"id\": 1, \"msg\": \"OK\"}", ContentType.JSON.toString())
+        ).start();
+
         try {
             HttpUtil.createServer(8888).start();
         } catch (Throwable t) {
