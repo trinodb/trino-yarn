@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.trino.on.yarn.constant.Constants;
 import com.trino.on.yarn.entity.JobInfo;
+import com.trino.on.yarn.executor.TrinoExecutor;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
@@ -129,9 +130,9 @@ public class ApplicationMaster {
 
     private static int amMemory = 128;
 
-    private JobInfo jobInfo;
+    private static JobInfo jobInfo = null;
 
-    private SimpleServer simpleServer;
+    private static SimpleServer simpleServer = null;
 
     public static void main(String[] args) {
         boolean result = false;
@@ -146,6 +147,7 @@ public class ApplicationMaster {
             LOG.info("ApplicationMaster finish...");
             // TODO:DUHANMIN 2022/7/18 这里启动trino Master节点
             //DataXExecutor.run(amMemory);
+            TrinoExecutor.run(jobInfo,simpleServer);
             while (!Server.masterFinish){
                 Thread.sleep(500);
             }
