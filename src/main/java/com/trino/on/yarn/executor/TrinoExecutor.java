@@ -42,7 +42,7 @@ public class TrinoExecutor {
 
     public Process start() {
         // TODO:DUHANMIN 2022/7/18 trino 启动逻辑
-        Process exec = RuntimeUtil.exec("");
+        Process exec = RuntimeUtil.exec("ls -la");
 
         return exec;
     }

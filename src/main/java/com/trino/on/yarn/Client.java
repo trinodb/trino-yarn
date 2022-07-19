@@ -593,6 +593,7 @@ public class Client {
         // app submission failure?
 
         // Monitor the application
+        LOG.warn("ApplicationId:" + appId.toString());
         return monitorApplication(appId);
 
     }
