@@ -160,7 +160,7 @@ public class ApplicationMaster {
             }
             appMaster.run();
             LOG.info("ApplicationMaster finish...");
-            TrinoExecutor.run(jobInfo, simpleServer, amMemory);
+            new TrinoExecutor(jobInfo, simpleServer, amMemory).run();
             while (Server.MASTER_FINISH.equals(0)) {
                 Thread.sleep(500);
             }

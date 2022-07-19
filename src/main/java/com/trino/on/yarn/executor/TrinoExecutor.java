@@ -22,10 +22,28 @@ import com.trino.on.yarn.server.Server;
 
 public class TrinoExecutor {
 
-    public static void run(JobInfo jobInfo, SimpleServer server, int amMemory) throws Throwable {
+    private JobInfo jobInfo;
+    private SimpleServer server;
+    private int amMemory;
+    private int trinoPort = NetUtil.getUsableLocalPort();
+
+    public TrinoExecutor(JobInfo jobInfo, SimpleServer server, int amMemory) {
+        this.jobInfo = jobInfo;
+        this.server = server;
+        this.amMemory = amMemory;
+    }
+
+    public void run() {
+        start();
+        end();
+    }
+
+    public void start() {
         // TODO:DUHANMIN 2022/7/18 trino 启动逻辑
+    }
+
+    public void end() {
         String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
-        int trinoPort = NetUtil.getUsableLocalPort();
         String body = JSONUtil.createObj()
                 .putOpt("ip", Server.ip())
                 .putOpt("port", server.getAddress().getPort())
@@ -34,6 +52,5 @@ public class TrinoExecutor {
                 .putOpt("sql", jobInfo.getSql())
                 .putOpt("start", true).toString();
         HttpUtil.post(clientRun, body);
-
     }
 }
