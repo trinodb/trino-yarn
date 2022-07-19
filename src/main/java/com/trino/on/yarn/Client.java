@@ -13,12 +13,15 @@
  */
 package com.trino.on.yarn;
 
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.constant.Constants;
 import com.trino.on.yarn.entity.JobInfo;
+import com.trino.on.yarn.server.ClientServer;
+import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
 import com.trino.on.yarn.util.YarnHelper;
 import org.apache.commons.cli.*;
@@ -196,6 +199,8 @@ public class Client {
                         + " the new application attempt ");
         opts.addOption("debug", false, "Dump out debug information");
         opts.addOption("help", false, "Print usage");
+        opts.addOption("run_type", true, "run_type is yarn-per or yarn-session");
+        opts.addOption("job_info", true, "******json*******");
     }
 
     /**
@@ -269,16 +274,16 @@ public class Client {
         }
         appMasterJar = cliParser.getOptionValue("jar_path");
 
-        if (!cliParser.hasOption("run") || StrUtil.isBlank(cliParser.getOptionValue("run"))) {
-            throw new IllegalArgumentException("run isBlank");
+        if (!cliParser.hasOption("run_type") || StrUtil.isBlank(cliParser.getOptionValue("run_type"))) {
+            throw new IllegalArgumentException("run_type isBlank");
         } else {
-            run = cliParser.getOptionValue("run");
+            run = cliParser.getOptionValue("run_type");
             if (run.equalsIgnoreCase("yarn-per")) {
                 // TODO:DUHANMIN 2022/7/18 后面加逻辑
             } else if (run.equalsIgnoreCase("yarn-session")) {
                 // TODO:DUHANMIN 2022/7/18 后面加逻辑
             } else
-                throw new IllegalArgumentException("run isBlank/run is yarn-per or yarn-session");
+                throw new IllegalArgumentException("run_type isBlank/run_type is yarn-per or yarn-session");
         }
 
         if (!cliParser.hasOption("job_info")) {
@@ -293,8 +298,8 @@ public class Client {
         } else
             throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
 
-        simpleServer = Server.initClient();
-        InetSocketAddress inetSocketAddress = Server.initClient().getAddress();
+        simpleServer = ClientServer.initClient();
+        InetSocketAddress inetSocketAddress = simpleServer.getAddress();
         jobInfo.setPort(inetSocketAddress.getPort());
         jobInfo.setIp(Server.ip());
 
@@ -506,7 +511,7 @@ public class Client {
         vargs.add("--num_containers " + numContainers);
         vargs.add("--priority " + shellCmdPriority);
         vargs.add("--master_memory " + this.amMemory);
-        vargs.add("--job_info " + jobInfo.toString());
+        vargs.add("-job_info " + Base64.encode(jobInfo.toString()));
 
         for (Map.Entry<String, String> entry : shellEnv.entrySet()) {
             vargs.add("--shell_env " + entry.getKey() + "=" + entry.getValue());

@@ -13,12 +13,15 @@
  */
 package com.trino.on.yarn;
 
+import cn.hutool.core.codec.Base64;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.trino.on.yarn.constant.Constants;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.executor.TrinoExecutor;
+import com.trino.on.yarn.server.MasterServer;
+import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
@@ -242,6 +245,8 @@ public class ApplicationMaster {
         opts.addOption("debug", false, "Dump out debug information");
 
         opts.addOption("help", false, "Print usage");
+        opts.addOption("job_info", true, "******json*******");
+
         CommandLine cliParser = new GnuParser().parse(opts, args);
 
         if (args.length == 0) {
@@ -275,9 +280,11 @@ public class ApplicationMaster {
                     + " Specified memory=" + amMemory);
         }
 
-        jobInfo = JSONUtil.toBean(cliParser.getOptionValue("job_info"), JobInfo.class);
+        String jobInfoStr = Base64.decodeStr(cliParser.getOptionValue("job_info"));
+        jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
+        LOG.warn("jobInfo:" + jobInfo);
 
-        simpleServer = Server.initMaster();
+        simpleServer = MasterServer.initMaster();
 
         Map<String, String> envs = System.getenv();
 

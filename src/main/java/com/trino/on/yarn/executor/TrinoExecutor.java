@@ -17,8 +17,8 @@ import cn.hutool.core.net.NetUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
-import com.trino.on.yarn.Server;
 import com.trino.on.yarn.entity.JobInfo;
+import com.trino.on.yarn.server.Server;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
