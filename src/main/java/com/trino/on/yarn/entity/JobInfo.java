@@ -26,6 +26,7 @@ public class JobInfo {
     private String catalogInfo;
     private String ip;
     private int port;
+    private String email;
 
     public JSONObject toJson() {
         return JSONUtil.parseObj(this);

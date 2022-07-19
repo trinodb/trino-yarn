@@ -17,19 +17,21 @@ import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.ContentType;
 import cn.hutool.http.server.HttpServerResponse;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
- *
  * 用于master/node和Client之间通信
+ *
  * @author duhanmin
- * @date 2020/7/6
+ * @date 2022/7/18
  */
 public class Server {
-
+    protected static final Log LOG = LogFactory.getLog(Server.class);
     public static final String CLIENT_RUN = "/client/run";
     public static final String CLIENT_LOG = "/client/log";
     public static final String MASTER_END = "/master/end";
-    public static Boolean MASTER_FINISH = Boolean.FALSE;
+    public static Integer MASTER_FINISH = 0;//0,等待;1,正常结束;其他,异常结束
     private static final String HTTP = "http://{}:{}";
 
     public static void responseWriteSuccess(HttpServerResponse response) {

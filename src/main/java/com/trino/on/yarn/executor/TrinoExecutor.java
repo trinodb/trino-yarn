@@ -19,12 +19,8 @@ import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.Server;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 public class TrinoExecutor {
-
-    private static final Log LOG = LogFactory.getLog(TrinoExecutor.class);
 
     public static void run(JobInfo jobInfo, SimpleServer server, int amMemory) throws Throwable {
         // TODO:DUHANMIN 2022/7/18 trino 启动逻辑
@@ -34,6 +30,8 @@ public class TrinoExecutor {
                 .putOpt("ip", Server.ip())
                 .putOpt("port", server.getAddress().getPort())
                 .putOpt("trinoPort", trinoPort)
+                .putOpt("email", jobInfo.getEmail())
+                .putOpt("sql", jobInfo.getSql())
                 .putOpt("start", true).toString();
         HttpUtil.post(clientRun, body);
 

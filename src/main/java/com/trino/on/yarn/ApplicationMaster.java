@@ -161,10 +161,16 @@ public class ApplicationMaster {
             appMaster.run();
             LOG.info("ApplicationMaster finish...");
             TrinoExecutor.run(jobInfo, simpleServer, amMemory);
-            while (!Server.MASTER_FINISH) {
+            while (Server.MASTER_FINISH.equals(0)) {
                 Thread.sleep(500);
             }
-            result = appMaster.finish();
+
+            if (Server.MASTER_FINISH.equals(1)) {
+                result = appMaster.finish();
+            } else {
+                result = false;
+            }
+
             LOG.info("ApplicationMaster finish");
         } catch (Throwable t) {
             LOG.fatal("Error running ApplicationMaster", t);
