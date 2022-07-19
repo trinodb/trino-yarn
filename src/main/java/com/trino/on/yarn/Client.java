@@ -609,7 +609,6 @@ public class Client {
     private boolean monitorApplication(ApplicationId appId) throws YarnException, IOException {
 
         while (true) {
-
             // Check app status every 5 second.
             try {
                 Thread.sleep(5000);

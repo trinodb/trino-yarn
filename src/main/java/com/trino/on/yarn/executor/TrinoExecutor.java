@@ -14,6 +14,7 @@
 package com.trino.on.yarn.executor;
 
 import cn.hutool.core.net.NetUtil;
+import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
@@ -33,13 +34,17 @@ public class TrinoExecutor {
         this.amMemory = amMemory;
     }
 
-    public void run() {
-        start();
+    public Process run() {
+        Process exec = start();
         end();
+        return exec;
     }
 
-    public void start() {
+    public Process start() {
         // TODO:DUHANMIN 2022/7/18 trino 启动逻辑
+        Process exec = RuntimeUtil.exec("");
+
+        return exec;
     }
 
     public void end() {

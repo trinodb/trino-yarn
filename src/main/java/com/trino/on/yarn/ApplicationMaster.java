@@ -14,6 +14,7 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
@@ -151,6 +152,7 @@ public class ApplicationMaster {
 
     public static void main(String[] args) {
         boolean result = false;
+        Process exec = null;
         try {
             ApplicationMaster appMaster = new ApplicationMaster();
             LOG.info("Initializing ApplicationMaster");
@@ -160,7 +162,7 @@ public class ApplicationMaster {
             }
             appMaster.run();
             LOG.info("ApplicationMaster finish...");
-            new TrinoExecutor(jobInfo, simpleServer, amMemory).run();
+            exec = new TrinoExecutor(jobInfo, simpleServer, amMemory).run();
             while (Server.MASTER_FINISH.equals(0)) {
                 Thread.sleep(500);
             }
@@ -173,6 +175,7 @@ public class ApplicationMaster {
 
             LOG.info("ApplicationMaster finish");
         } catch (Throwable t) {
+            RuntimeUtil.destroy(exec);
             LOG.fatal("Error running ApplicationMaster", t);
             LogManager.shutdown();
             ExitUtil.terminate(1, t);
