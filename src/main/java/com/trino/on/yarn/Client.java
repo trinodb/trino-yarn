@@ -394,7 +394,7 @@ public class Client {
         // Get a new application id
         YarnClientApplication app = yarnClient.createApplication();
         GetNewApplicationResponse appResponse = app.getNewApplicationResponse();
-        // TODO get min/max resource capabilities from RM and change memory ask if needed
+        //  get min/max resource capabilities from RM and change memory ask if needed
         // If we do not have min/max, we may not be able to correctly request
         // the required resources from the RM for the app master
         // Memory ask has to be a multiple of min and less than max.
@@ -574,7 +574,7 @@ public class Client {
         appContext.setAMContainerSpec(amContainer);
 
         // Set the priority for the application master
-        // TODO - what is the range for priority? how to decide?
+        // what is the range for priority? how to decide?
         Priority pri = Priority.newInstance(amPriority);
         appContext.setPriority(pri);
 
@@ -589,7 +589,6 @@ public class Client {
 
         yarnClient.submitApplication(appContext);
 
-        // TODO
         // Try submitting the same request again
         // app submission failure?
 
@@ -671,7 +670,7 @@ public class Client {
      * @throws IOException
      */
     private void forceKillApplication(ApplicationId appId) throws YarnException, IOException {
-        // TODO clarify whether multiple jobs with the same app id can be submitted and be running at
+        // clarify whether multiple jobs with the same app id can be submitted and be running at
         // the same time.
         // If yes, can we kill a particular attempt only?
 

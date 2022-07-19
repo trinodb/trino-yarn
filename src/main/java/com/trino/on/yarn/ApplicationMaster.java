@@ -86,7 +86,6 @@ public class ApplicationMaster {
     @VisibleForTesting
     protected ApplicationAttemptId appAttemptID;
 
-    // TODO
     // For status update for clients - yet to be implemented
     // Hostname of the container
     private String appMasterHostname = "";
@@ -161,7 +160,6 @@ public class ApplicationMaster {
             }
             appMaster.run();
             LOG.info("ApplicationMaster finish...");
-            // TODO:DUHANMIN 2022/7/18 这里启动trino Master节点
             TrinoExecutor.run(jobInfo, simpleServer, amMemory);
             while (!Server.MASTER_FINISH) {
                 Thread.sleep(500);
@@ -420,9 +418,9 @@ public class ApplicationMaster {
         appMasterHostname = NetUtils.getHostname();
 
         // Setup local RPC Server to accept status requests directly from clients
-        // TODO need to setup a protocol for client to be able to communicate to
+        //  need to setup a protocol for client to be able to communicate to
         // the RPC server
-        // TODO use the rpc port info to register with the RM for the client to
+        //  use the rpc port info to register with the RM for the client to
         // send requests to this app master
 
         // Register self with ResourceManager
@@ -432,9 +430,9 @@ public class ApplicationMaster {
                         appMasterTrackingUrl);
 
         // Setup local RPC Server to accept status requests directly from clients
-        // TODO need to setup a protocol for client to be able to communicate to
+        //  need to setup a protocol for client to be able to communicate to
         // the RPC server
-        // TODO use the rpc port info to register with the RM for the client to
+        //  use the rpc port info to register with the RM for the client to
         // send requests to this app master
 
         // Dump out information about cluster capability as seen by the
@@ -549,7 +547,7 @@ public class ApplicationMaster {
         // setup requirements for hosts
         // using * as any host will do for the distributed shell app
         // set the priority for the request
-        // TODO - what is the range for priority? how to decide?
+        // what is the range for priority? how to decide?
         Priority pri = Priority.newInstance(requestPriority);
 
         // Set up resource type requirements
