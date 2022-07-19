@@ -52,6 +52,23 @@ public class TrinoExecutor {
         return exec;
     }
 
+    /**
+     * trino 启动逻辑
+     * 👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻
+     * 'java', '-cp',
+     * '/Users/duhanmin/Desktop/trino-server-359/lib/*',
+     * '-Dlog.output-file=/Users/duhanmin/Desktop/trino-server-359/plugin/var/log/server.log',
+     * '-Dcatalog.config-dir=/Users/duhanmin/Desktop/trino-server-359/plugin',
+     * '-Dnode.data-dir=/Users/duhanmin/Desktop/trino-server-359/plugin',
+     * '-Dnode.id=i-dsadsadasda',
+     * '-Dnode.environment=production',
+     * '-Dlog.enable-console=false',
+     * '-Dplugin.dir=/Users/duhanmin/Desktop/trino-server-359/plugin',
+     * '-Dconfig=/Users/duhanmin/Desktop/trino-server-359/conf/config.properties',
+     * 'io.trino.server.TrinoServer'
+     *
+     * @return
+     */
     public Process start() {
         // TODO:DUHANMIN 2022/7/18 trino 启动逻辑
         String conf = createConf();
