@@ -14,7 +14,6 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.SecureUtil;
 import cn.hutool.http.ContentType;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -72,14 +71,5 @@ public class AdminTest {
         jobInfo.setIp("localhost");
         jobInfo.setPort(8080);
         System.out.println(jobInfo);
-    }
-
-    @Test
-    public void md5() {
-        String data1 = "{\"id\": 1, \"msg\": \"OK\"}";
-        String digestHex = SecureUtil.md5(data1);
-        System.out.println(digestHex);
-        //digestHex = SecureUtil(digestHex);
-        System.out.println(SecureUtil.md5().digestHex(digestHex));
     }
 }
