@@ -56,8 +56,8 @@ public class TrinoExecutor {
         // TODO:DUHANMIN 2022/7/18 trino 启动逻辑
         String conf = createConf();
 
-        Process exec = RuntimeUtil.exec("ls -la");
-        IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) System.out::println);
+        Process exec = RuntimeUtil.exec("ls -la ./ && ls -la ./conf");
+        IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) LOG::info);
         return exec;
     }
 

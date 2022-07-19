@@ -121,6 +121,8 @@ public class Client {
     private String run;
 
     private SimpleServer simpleServer;
+
+    private String applicationId;
     /*
      * private String dataxJob = "";
      *
@@ -593,7 +595,8 @@ public class Client {
         // app submission failure?
 
         // Monitor the application
-        LOG.warn("ApplicationId:" + appId.toString());
+        applicationId = appId.toString();
+        LOG.warn("ApplicationId:" + applicationId);
         return monitorApplication(appId);
 
     }

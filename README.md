@@ -15,7 +15,7 @@ sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
   -appname DemoApp \
   -master_memory 1024 \
   -queue default \
-  -job_info {"sql":"select * from table"}
+  -job_info '{"sql":"select * from table","jdk11Home":"table","pluginPath":"db"}'
 ```
 
 ### 停止
