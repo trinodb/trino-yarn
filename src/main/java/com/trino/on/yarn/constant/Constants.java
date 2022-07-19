@@ -32,13 +32,16 @@ public class Constants {
 
     public static final String TRINO_LOG = "log.properties";
 
-    public static final String TRINO_LOG_CONTENT = "io.trino=INFO";
+    /**
+     * 最低级别INFO，还有DEBUG，INFO，WARN，ERROR
+     */
+    public static final String TRINO_LOG_CONTENT = "io.trino={}";
 
     public static final String TRINO_JVM = "jvm.config";
 
     public static final String TRINO_JVM_CONTENT = "-verbose:class\n" +
             "-server\n" +
-            "-Xmx{}\n" +
+            "-Xmx{}m\n" +
             "-XX:+UseG1GC\n" +
             "-XX:G1HeapRegionSize=32M\n" +
             "-XX:+ExplicitGCInvokesConcurrent\n" +
@@ -131,9 +134,9 @@ public class Constants {
             "http-server.threads.max=500\n" +
             "discovery-server.enabled=true\n" +
             "sink.max-buffer-size=1GB\n" +
-            "query.max-memory={}\n" +
-            "query.max-memory-per-node={}\n" +
-            "query.max-total-memory-per-node=31681396763B\n" +
+            "query.max-memory={}MB\n" +
+            "query.max-memory-per-node={}MB\n" +
+            "query.max-total-memory-per-node={}MB\n" +
             "query.max-history=40\n" +
             "query.min-expire-age=30m\n" +
             "query.client.timeout=30m\n" +

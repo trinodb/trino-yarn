@@ -13,8 +13,12 @@
  */
 package com.trino.on.yarn.executor;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.io.LineHandler;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.RuntimeUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
@@ -25,12 +29,15 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 
+import static com.trino.on.yarn.constant.Constants.*;
+
 public class TrinoExecutor {
     protected static final Log LOG = LogFactory.getLog(TrinoExecutor.class);
 
     private JobInfo jobInfo;
     private SimpleServer server;
     private int amMemory;
+    private String ip = Server.ip();
     private int trinoPort = NetUtil.getUsableLocalPort();
 
     public TrinoExecutor(JobInfo jobInfo, SimpleServer server, int amMemory) {
@@ -47,11 +54,34 @@ public class TrinoExecutor {
 
     public Process start() {
         // TODO:DUHANMIN 2022/7/18 trino 启动逻辑
+        String conf = createConf();
+
+        Process exec = RuntimeUtil.exec("ls -la");
+        IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) System.out::println);
+        return exec;
+    }
+
+    private String createConf() {
         String path = new File("./").getAbsolutePath();
         LOG.warn("trino path: " + path);
-        Process exec = RuntimeUtil.exec("ls -la");
+        final String conf = path + "/conf/";
 
-        return exec;
+        String log = StrUtil.format(TRINO_LOG_CONTENT, "WARN");
+        FileUtil.writeUtf8String(log, conf + TRINO_LOG);
+
+        String jvm = StrUtil.format(TRINO_JVM_CONTENT, amMemory);
+        FileUtil.writeUtf8String(jvm, conf + TRINO_JVM);
+
+        String env = StrUtil.format(TRINO_ENV_CONTENT, jobInfo.getJdk11Home(), ip, trinoPort);
+        FileUtil.writeUtf8String(env, conf + TRINO_ENV);
+
+        String node = StrUtil.format(TRINO_NODE_CONTENT, StrUtil.uuid(), path, path, jobInfo.getPluginPath());
+        FileUtil.writeUtf8String(node, conf + TRINO_NODE);
+
+        String config = StrUtil.format(TRINO_CONFIG_CONTENT, ip, trinoPort, amMemory, amMemory, amMemory, trinoPort, path);
+        FileUtil.writeUtf8String(config, conf + TRINO_CONFIG);
+
+        return path;
     }
 
     public void end() {

@@ -20,7 +20,9 @@ import lombok.Data;
 @Data
 public class JobInfo {
 
+    private String jdk11Home;
     private String sql;
+    private String pluginPath;
     private String libPath;
     private String configPath;
     private String catalogInfo;
