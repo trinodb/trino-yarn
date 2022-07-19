@@ -26,6 +26,7 @@ public class AdminTest {
     public void admin() {
         String data1 = "{\"id\": 1, \"msg\": \"OK\"}";
         String data2 = "{\"id\": 2, \"msg\": \"OK\"}";
+        String data3 = "dsgfadsfdsafdasfds";
         SimpleServer server = HttpUtil.createServer(0);
         server.addAction("/restTest", (request, response) -> {
                     assert request.getBody().equals(data1);
@@ -35,6 +36,11 @@ public class AdminTest {
         ).addAction("/restTest2", (request, response) -> {
                     assert request.getBody().equals(data2);
                     response.write("{\"id\": 2, \"msg\": \"OK\"}", ContentType.JSON.toString());
+                }
+
+        ).addAction("/restTest3", (request, response) -> {
+                    assert request.getBody().equals(data3);
+                    response.write(data3, ContentType.JSON.toString());
                 }
 
         ).start();
@@ -48,6 +54,10 @@ public class AdminTest {
         url = StrUtil.format("http://{}:{}/restTest2", localhostStr, server.getAddress().getPort());
         dataResponse = HttpUtil.post(url, data2);
         assert dataResponse.equals(data2);
+
+        url = StrUtil.format("http://{}:{}/restTest3", localhostStr, server.getAddress().getPort());
+        dataResponse = HttpUtil.post(url, data3);
+        assert dataResponse.equals(data3);
     }
     
     @Test
