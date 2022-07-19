@@ -20,8 +20,13 @@ import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.Server;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.File;
 
 public class TrinoExecutor {
+    protected static final Log LOG = LogFactory.getLog(TrinoExecutor.class);
 
     private JobInfo jobInfo;
     private SimpleServer server;
@@ -42,6 +47,8 @@ public class TrinoExecutor {
 
     public Process start() {
         // TODO:DUHANMIN 2022/7/18 trino 启动逻辑
+        String path = new File("./").getAbsolutePath();
+        LOG.warn("trino path: " + path);
         Process exec = RuntimeUtil.exec("ls -la");
 
         return exec;
