@@ -26,6 +26,7 @@ public class JobInfo {
     private String ip;
     private int port;
     private String email;
+    private boolean test;
 
     public String getPluginPath() {
         return path + "/plugin";
