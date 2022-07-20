@@ -39,19 +39,17 @@ public class Constants {
 
     public static final String TRINO_JVM = "jvm.config";
 
-    public static final String TRINO_JVM_CONTENT = "-verbose:class\n" +
-            "-server\n" +
+    public static final String TRINO_JVM_CONTENT =
             "-Xmx{}m\n" +
-            "-XX:+UseG1GC\n" +
-            "-XX:G1HeapRegionSize=32M\n" +
-            "-XX:+ExplicitGCInvokesConcurrent\n" +
-            "-XX:+HeapDumpOnOutOfMemoryError\n" +
-            "-XX:OnOutOfMemoryError=kill -9 %p\n" +
-            "-XX:ReservedCodeCacheSize=150M\n" +
-            "-Dlog4j2.formatMsgNoLookups=true\n" +
-            "-Djava.library.path=/usr/lib/hadoop/lib/native/:/usr/lib/hadoop-lzo/lib/native/:/usr/lib/\n" +
-            "-Djdk.attach.allowAttachSelf=true\n" +
-            "--add-exports=java.base/jdk.internal.util=ALL-UNNAMED \n" +
+                    "-XX:+UseG1GC\n" +
+                    "-XX:G1HeapRegionSize=32M\n" +
+                    "-XX:+ExplicitGCInvokesConcurrent\n" +
+                    "-XX:+HeapDumpOnOutOfMemoryError\n" +
+                    "-XX:ReservedCodeCacheSize=150M\n" +
+                    "-Dlog4j2.formatMsgNoLookups=true\n" +
+                    "-Djava.library.path=/usr/lib/hadoop/lib/native/:/usr/lib/hadoop-lzo/lib/native/:/usr/lib/\n" +
+                    "-Djdk.attach.allowAttachSelf=true\n" +
+                    "--add-exports=java.base/jdk.internal.util=ALL-UNNAMED \n" +
             "--add-opens=java.base/jdk.internal.util=ALL-UNNAMED\n" +
             "--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED\n" +
             "--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED\n" +
@@ -131,7 +129,7 @@ public class Constants {
      */
     public static final String TRINO_CONFIG_CONTENT = "coordinator=true\n" +
             "node-scheduler.include-coordinator=true\n" +
-            "discovery.uri={}:{}\n" +
+            "discovery.uri=http://{}:{}\n" +
             "http-server.threads.max=500\n" +
             "discovery-server.enabled=true\n" +
             "sink.max-buffer-size=1GB\n" +

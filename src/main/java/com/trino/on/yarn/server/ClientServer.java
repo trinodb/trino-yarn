@@ -44,7 +44,7 @@ public class ClientServer extends Server {
             }
             responseWriteSuccess(response);
         }).addAction(CLIENT_LOG, (request, response) -> {
-            System.out.println(request.getBody());
+            LOG.info(request.getBody());
             responseWriteSuccess(response);
         }).start();
         return server;

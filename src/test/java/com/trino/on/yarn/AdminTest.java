@@ -77,6 +77,8 @@ public class AdminTest {
 
     @Test
     public void linux_x86_64() {
+        Map<String, String> getenv = System.getenv();
+        System.out.println(getenv);
         String system = System.getProperty("os.name", "Linux") + "-" + System.getProperty("os.arch", "x86_64");
         System.out.println(system);
         System.out.println("-----------------------");
@@ -84,5 +86,8 @@ public class AdminTest {
         for (Map.Entry<Object, Object> objectObjectEntry : props.entrySet()) {
             System.out.println(objectObjectEntry.getKey() + " = " + objectObjectEntry.getValue());
         }
+
     }
+
+
 }

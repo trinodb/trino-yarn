@@ -18,14 +18,12 @@ import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.trino.on.yarn.constant.Constants;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.executor.TrinoExecutor;
 import com.trino.on.yarn.server.MasterServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
-import com.trino.on.yarn.util.YarnHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
@@ -784,43 +782,14 @@ public class ApplicationMaster {
          */
         @Override
         public void run() {
-            LOG.info("Setting up container launch container for containerId="
-                    + container.getId());
-            Map<String, String> currentEnvs = System.getenv();
-            if (!currentEnvs.containsKey(Constants.JAR_FILE_PATH)) {
-                throw new RuntimeException(Constants.JAR_FILE_PATH
-                        + " not set in the environment.");
-            }
-            String frameworkPath = currentEnvs.get(Constants.JAR_FILE_PATH);
+            LOG.info("Setting up container launch container for containerId=" + container.getId());
 
-            shellEnv.put("CLASSPATH", YarnHelper.buildClassPathEnv(conf));
-
-            // Set the local resources
-            Map<String, LocalResource> localResources = new HashMap<>(4);
-
-            try {
-                YarnHelper.addFrameworkToDistributedCache(frameworkPath, localResources, conf);
-            } catch (IOException e) {
-                Throwables.propagate(e);
-            }
-
-            String command = System.getenv("JAVA_HOME") + "/bin/java -version"
-                    + " 1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + ApplicationConstants.STDOUT
-                    + " 2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + ApplicationConstants.STDERR;
+            String command = System.getenv("JAVA_HOME") + "/bin/java -version";
             List<String> commands = new ArrayList<>();
             commands.add(command);
 
-            // Set up ContainerLaunchContext, setting local resource, environment,
-            // command and token for constructor.
-
-            // Note for tokens: Set up tokens for the container too. Today, for normal
-            // shell commands, the container in distribute-shell doesn't need any
-            // tokens. We are populating them mainly for NodeManagers to be able to
-            // download anyfiles in the distributed file-system. The tokens are
-            // otherwise also useful in cases, for e.g., when one is running a
-            // "hadoop dfs" command inside the distributed shell.
             ContainerLaunchContext ctx = ContainerLaunchContext.newInstance(
-                    localResources, shellEnv, commands, null, allTokens.duplicate(), null);
+                    null, shellEnv, commands, null, allTokens.duplicate(), null);
             runningContainers.putIfAbsent(container.getId(), container);
             containerListener.addContainer(container.getId(), container);
             nmClientAsync.startContainerAsync(container, ctx);

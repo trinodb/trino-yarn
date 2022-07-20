@@ -67,13 +67,20 @@ public class TrinoExecutor {
         createConf();
         Process exec;
         if (jobInfo.isTest()) {
-            exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), ArrayUtil.toArray(trinoEnv, String.class));
-        } else {
             exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), "ls -la ./ && ls -la ./conf");
+        } else {
+            exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), ArrayUtil.toArray(trinoEnv, String.class));
         }
         LOG.warn(JSONUtil.toJsonStr(trinoEnv));
         LOG.warn(JSONUtil.toJsonStr(trinoEnvExport));
-        IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) LOG::info);
+        String clientRun = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
+        IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) line -> {
+            LOG.info(line);
+            if (jobInfo.isDebug()) {
+                HttpUtil.post(clientRun, line);
+            }
+        });
+
         int exitCode = exec.waitFor();
         assert (exitCode == 0);
         return exec;
@@ -95,7 +102,11 @@ public class TrinoExecutor {
         FileUtil.mkdir(conf);
         FileUtil.mkdir(data);
 
-        String log = StrUtil.format(TRINO_LOG_CONTENT, "WARN");
+        String logInfo = "WARN";
+        if (jobInfo.isDebug()) {
+            logInfo = "INFO";
+        }
+        String log = StrUtil.format(TRINO_LOG_CONTENT, logInfo);
         File file = FileUtil.writeUtf8String(log, conf + TRINO_LOG);
         String config = StrUtil.format(TRINO_CONFIG_CONTENT, ip, trinoPort, amMemory, amMemory, amMemory, trinoPort, path);
         File configEnv = FileUtil.writeUtf8String(config, conf + TRINO_CONFIG);
@@ -104,9 +115,10 @@ public class TrinoExecutor {
         put(jobInfo.getJdk11Home() + "/bin/java");
         put("-cp");
         if (!StrUtil.endWith(jobInfo.getLibPath(), "*")) {
-            put(jobInfo.getLibPath() + "/*");
+            put(".:" + jobInfo.getLibPath() + "/*");
+        } else {
+            put(".:" + jobInfo.getLibPath());
         }
-        put(jobInfo.getLibPath());
         String jvms = StrUtil.format(TRINO_JVM_CONTENT, amMemory);
         for (String jvm : StrUtil.split(jvms, StrPool.LF)) {
             put(jvm);
@@ -114,7 +126,7 @@ public class TrinoExecutor {
         putEnv(LOG_LEVELS_FILE, file.getAbsolutePath());
         putEnv(CONFIG, configEnv.getAbsolutePath());
         putEnv(LOG_OUTPUT_FILE, logPath);
-        putEnv("log.enable-console=false");
+        putEnv("log.enable-console=true");
         String nodes = StrUtil.format(TRINO_NODE_CONTENT, StrUtil.uuid(), path, jobInfo.getCatalog(), jobInfo.getPluginPath());
         for (String node : StrUtil.split(nodes, StrPool.LF)) {
             putEnv(node);
@@ -127,7 +139,12 @@ public class TrinoExecutor {
             putEnvExport(env);
         }
         String osInfo = System.getProperty("os.name", "Linux") + "-" + System.getProperty("os.arch", "x86_64");
-        putEnvExport(jobInfo.getProcname(osInfo));
+        String procname = jobInfo.getProcname(osInfo);
+
+        if (FileUtil.exist(procname)) {
+            putEnvExport(procname);
+        }
+
         return path;
     }
 
