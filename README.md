@@ -15,7 +15,7 @@ sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
   -appname DemoApp \
   -master_memory 1024 \
   -queue default \
-  -job_info '{"sql":"select * from table","jdk11Home":"/mnt/dss/jdk11","path":"/mnt/dss/trino","catalog":"/mnt/dss/trino/catalog"}'
+  -job_info '{"sql":"select * from table","jdk11Home":/usr/lib/jvm/java-11-amazon-corretto.x86_64","path":"/mnt/dss/trino","catalog":"/mnt/dss/trino/catalog"}'
 ```
 
 还支持将master日志打到Client
@@ -27,7 +27,7 @@ sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
   -appname DemoApp \
   -master_memory 1024 \
   -queue default \
-  -job_info '{"sql":"select * from table","jdk11Home":"/mnt/dss/jdk11","path":"/mnt/dss/trino","catalog":"/mnt/dss/trino/catalog","test":true,"debug":true}'
+  -job_info '{"sql":"select * from table","jdk11Home":"/usr/lib/jvm/java-11-amazon-corretto.x86_64","path":"/mnt/dss/trino","catalog":"/mnt/dss/trino/catalog","test":true,"debug":true}'
 ```
 
 ### 日志
