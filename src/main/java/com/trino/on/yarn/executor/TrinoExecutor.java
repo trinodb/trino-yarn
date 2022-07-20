@@ -65,7 +65,8 @@ public class TrinoExecutor {
      */
     public Process start() throws InterruptedException {
         createConf();
-        Process exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), ArrayUtil.toArray(trinoEnv, String.class));
+        //Process exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), ArrayUtil.toArray(trinoEnv, String.class));
+        Process exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), "ls -la ./ && ls -la ./conf");
         LOG.warn(JSONUtil.toJsonStr(trinoEnv));
         LOG.warn(JSONUtil.toJsonStr(trinoEnvExport));
         IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) LOG::info);

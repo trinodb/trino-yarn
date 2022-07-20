@@ -18,12 +18,14 @@ import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.trino.on.yarn.constant.Constants;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.executor.TrinoExecutor;
 import com.trino.on.yarn.server.MasterServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
+import com.trino.on.yarn.util.YarnHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
@@ -784,34 +786,27 @@ public class ApplicationMaster {
         public void run() {
             LOG.info("Setting up container launch container for containerId="
                     + container.getId());
-            /*
-             * Map<String, String> currentEnvs = System.getenv(); if (!currentEnvs.containsKey(Constants.JAR_FILE_PATH)) { throw new RuntimeException(Constants.JAR_FILE_PATH +
-             * " not set in the environment."); } String frameworkPath = currentEnvs.get(Constants.JAR_FILE_PATH);
-             *
-             * shellEnv.put("CLASSPATH", YarnHelper.buildClassPathEnv(conf));
-             *
-             * // Set the local resources Map<String, LocalResource> localResources = new HashMap<>(4);
-             *
-             * try { YarnHelper.addFrameworkToDistributedCache(frameworkPath, localResources, conf); } catch (IOException e) { Throwables.propagate(e); }
-             *
-             * // Set the necessary command to execute on the allocated container Vector<CharSequence> vargs = new Vector<>(10);
-             *
-             * // Set java executable command vargs.add(System.getenv("JAVA_HOME") + "/bin/java"); // Set am memory size vargs.add("-Xms" + containerMemory + "m"); vargs.add("-Xmx" + containerMemory +
-             * "m"); vargs.add(javaOpts);
-             *
-             * // Set tmp dir vargs.add("-Djava.io.tmpdir=$PWD/tmp");
-             *
-             * // Set log4j configuration file //vargs.add("-Dlog4j.configuration=" + Constants.NESTO_YARN_APPCONTAINER_LOG4J);
-             *
-             * // Set class name vargs.add(HolleWorld.class.getName());
-             *
-             * // Set args for the shell command if any vargs.add(shellArgs); // Add log redirect params vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout"); vargs.add("2>" +
-             * ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");
-             *
-             * // Get final command StringBuilder command = new StringBuilder(); for (CharSequence str : vargs) { command.append(str).append(" "); }
-             */
+            Map<String, String> currentEnvs = System.getenv();
+            if (!currentEnvs.containsKey(Constants.JAR_FILE_PATH)) {
+                throw new RuntimeException(Constants.JAR_FILE_PATH
+                        + " not set in the environment.");
+            }
+            String frameworkPath = currentEnvs.get(Constants.JAR_FILE_PATH);
 
-            String command = System.getenv("JAVA_HOME") + "/bin/java -version";
+            shellEnv.put("CLASSPATH", YarnHelper.buildClassPathEnv(conf));
+
+            // Set the local resources
+            Map<String, LocalResource> localResources = new HashMap<>(4);
+
+            try {
+                YarnHelper.addFrameworkToDistributedCache(frameworkPath, localResources, conf);
+            } catch (IOException e) {
+                Throwables.propagate(e);
+            }
+
+            String command = System.getenv("JAVA_HOME") + "/bin/java -version"
+                    + " 1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + ApplicationConstants.STDOUT
+                    + " 2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + ApplicationConstants.STDERR;
             List<String> commands = new ArrayList<>();
             commands.add(command);
 
@@ -825,7 +820,7 @@ public class ApplicationMaster {
             // otherwise also useful in cases, for e.g., when one is running a
             // "hadoop dfs" command inside the distributed shell.
             ContainerLaunchContext ctx = ContainerLaunchContext.newInstance(
-                    null, shellEnv, commands, null, allTokens.duplicate(), null);
+                    localResources, shellEnv, commands, null, allTokens.duplicate(), null);
             runningContainers.putIfAbsent(container.getId(), container);
             containerListener.addContainer(container.getId(), container);
             nmClientAsync.startContainerAsync(container, ctx);

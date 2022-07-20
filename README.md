@@ -15,7 +15,7 @@ sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
   -appname DemoApp \
   -master_memory 1024 \
   -queue default \
-  -job_info '{"sql":"select * from table","jdk11Home":"/mnt/dss","path":"/mnt/dss"}'
+  -job_info '{"sql":"select * from table","jdk11Home":"/mnt/dss/jdk11","path":"/mnt/dss/trino","path":"/mnt/dss/trino/catalog"}'
 ```
 
 ### 日志
@@ -29,3 +29,8 @@ sudo yarn logs -applicationId application_1642747413846_0462
 ```shell
 sudo yarn application -kill application_1642747413846_0462
 ```
+
+### 附录
+
+* [jdk11下载](https://jdk.java.net/java-se-ri/11)
+* [trino下载](https://repo1.maven.org/maven2/io/trino/trino-server/363/)
