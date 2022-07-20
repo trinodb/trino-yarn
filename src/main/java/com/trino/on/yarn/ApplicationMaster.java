@@ -175,10 +175,11 @@ public class ApplicationMaster {
 
             LOG.info("ApplicationMaster finish");
         } catch (Throwable t) {
-            RuntimeUtil.destroy(exec);
             LOG.fatal("Error running ApplicationMaster", t);
             LogManager.shutdown();
             ExitUtil.terminate(1, t);
+        } finally {
+            RuntimeUtil.destroy(exec);
         }
         if (result) {
             LOG.info("Application Master completed successfully. exiting");

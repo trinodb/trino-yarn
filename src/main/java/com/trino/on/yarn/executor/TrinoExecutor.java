@@ -52,7 +52,7 @@ public class TrinoExecutor {
         this.amMemory = amMemory;
     }
 
-    public Process run() {
+    public Process run() throws InterruptedException {
         Process exec = start();
         end();
         return exec;
@@ -60,36 +60,24 @@ public class TrinoExecutor {
 
     /**
      * trino 启动逻辑
-     * 👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻
-     * 'java', '-cp',
-     * '/Users/duhanmin/Desktop/trino-server-359/lib/*',
-     * '-Dlog.output-file=/Users/duhanmin/Desktop/trino-server-359/plugin/var/log/server.log',
-     * '-Dcatalog.config-dir=/Users/duhanmin/Desktop/trino-server-359/plugin',
-     * '-Dnode.data-dir=/Users/duhanmin/Desktop/trino-server-359/plugin',
-     * '-Dnode.id=i-dsadsadasda',
-     * '-Dnode.environment=production',
-     * '-Dlog.enable-console=false',
-     * '-Dplugin.dir=/Users/duhanmin/Desktop/trino-server-359/plugin',
-     * '-Dconfig=/Users/duhanmin/Desktop/trino-server-359/conf/config.properties',
-     * 'io.trino.server.TrinoServer'
      *
      * @return
      */
-    public Process start() {
-        // TODO:DUHANMIN 2022/7/18 trino 启动逻辑
-        String conf = createConf();
-
-        Process exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), "ls -la ./ && ls -la ./conf");
+    public Process start() throws InterruptedException {
+        createConf();
+        Process exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), ArrayUtil.toArray(trinoEnv, String.class));
         LOG.warn(JSONUtil.toJsonStr(trinoEnv));
         LOG.warn(JSONUtil.toJsonStr(trinoEnvExport));
         IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) LOG::info);
+        int exitCode = exec.waitFor();
+        assert (exitCode == 0);
         return exec;
     }
 
     private String createConf() {
         String path = new File("./").getAbsolutePath();
-        LOG.warn("trino conf path: " + path);
-        LOG.warn("trino lib path: " + jobInfo.getPath());
+        LOG.warn("trino conf path:" + path);
+        LOG.warn("trino lib path:" + jobInfo.getPath());
         final String conf = path + "/conf/";
         final String data = path + "/data/";
         final String logPath = path + "/server.log";
