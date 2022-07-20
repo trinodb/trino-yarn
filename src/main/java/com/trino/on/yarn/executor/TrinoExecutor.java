@@ -13,10 +13,13 @@
  */
 package com.trino.on.yarn.executor;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
 import cn.hutool.core.net.NetUtil;
+import cn.hutool.core.text.StrPool;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
@@ -28,6 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.util.List;
 
 import static com.trino.on.yarn.constant.Constants.*;
 
@@ -39,6 +43,8 @@ public class TrinoExecutor {
     private int amMemory;
     private String ip = Server.ip();
     private int trinoPort = NetUtil.getUsableLocalPort();
+    private static final List<String> trinoEnv = CollUtil.newArrayList();
+    private static final List<String> trinoEnvExport = CollUtil.newArrayList();
 
     public TrinoExecutor(JobInfo jobInfo, SimpleServer server, int amMemory) {
         this.jobInfo = jobInfo;
@@ -73,31 +79,57 @@ public class TrinoExecutor {
         // TODO:DUHANMIN 2022/7/18 trino 启动逻辑
         String conf = createConf();
 
-        Process exec = RuntimeUtil.exec("ls -la ./ && ls -la ./conf");
+        Process exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), "ls -la ./ && ls -la ./conf");
+        LOG.warn(JSONUtil.toJsonStr(trinoEnv));
+        LOG.warn(JSONUtil.toJsonStr(trinoEnvExport));
         IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) LOG::info);
         return exec;
     }
 
     private String createConf() {
         String path = new File("./").getAbsolutePath();
-        LOG.warn("trino path: " + path);
+        LOG.warn("trino conf path: " + path);
+        LOG.warn("trino lib path: " + jobInfo.getPath());
         final String conf = path + "/conf/";
+        final String data = path + "/data/";
+        final String logPath = path + "/server.log";
+
+        FileUtil.mkdir(conf);
+        FileUtil.mkdir(data);
 
         String log = StrUtil.format(TRINO_LOG_CONTENT, "WARN");
-        FileUtil.writeUtf8String(log, conf + TRINO_LOG);
-
-        String jvm = StrUtil.format(TRINO_JVM_CONTENT, amMemory);
-        FileUtil.writeUtf8String(jvm, conf + TRINO_JVM);
-
-        String env = StrUtil.format(TRINO_ENV_CONTENT, jobInfo.getJdk11Home(), ip, trinoPort);
-        FileUtil.writeUtf8String(env, conf + TRINO_ENV);
-
-        String node = StrUtil.format(TRINO_NODE_CONTENT, StrUtil.uuid(), path, path, jobInfo.getPluginPath());
-        FileUtil.writeUtf8String(node, conf + TRINO_NODE);
-
+        File file = FileUtil.writeUtf8String(log, conf + TRINO_LOG);
         String config = StrUtil.format(TRINO_CONFIG_CONTENT, ip, trinoPort, amMemory, amMemory, amMemory, trinoPort, path);
-        FileUtil.writeUtf8String(config, conf + TRINO_CONFIG);
+        File configEnv = FileUtil.writeUtf8String(config, conf + TRINO_CONFIG);
 
+        //写入运行参数
+        put(jobInfo.getJdk11Home() + "/bin/java");
+        put("-cp");
+        if (!StrUtil.endWith(jobInfo.getLibPath(), "*")) {
+            put(jobInfo.getLibPath() + "/*");
+        }
+        put(jobInfo.getLibPath());
+        String jvms = StrUtil.format(TRINO_JVM_CONTENT, amMemory);
+        for (String jvm : StrUtil.split(jvms, StrPool.LF)) {
+            put(jvm);
+        }
+        putEnv(LOG_LEVELS_FILE, file.getAbsolutePath());
+        putEnv(CONFIG, configEnv.getAbsolutePath());
+        putEnv(LOG_OUTPUT_FILE, logPath);
+        putEnv("log.enable-console=false");
+        String nodes = StrUtil.format(TRINO_NODE_CONTENT, StrUtil.uuid(), path, jobInfo.getCatalog(), jobInfo.getPluginPath());
+        for (String node : StrUtil.split(nodes, StrPool.LF)) {
+            putEnv(node);
+        }
+        put("io.trino.server.TrinoServer");
+
+        //写入环境变量
+        String envs = StrUtil.format(TRINO_ENV_CONTENT, jobInfo.getJdk11Home(), ip, trinoPort);
+        for (String env : StrUtil.split(envs, StrPool.LF)) {
+            putEnvExport(env);
+        }
+        String osInfo = System.getProperty("os.name", "Linux") + "-" + System.getProperty("os.arch", "x86_64");
+        putEnvExport(jobInfo.getProcname(osInfo));
         return path;
     }
 
@@ -111,5 +143,21 @@ public class TrinoExecutor {
                 .putOpt("sql", jobInfo.getSql())
                 .putOpt("start", true).toString();
         HttpUtil.post(clientRun, body);
+    }
+
+    public void putEnv(String k, String v) {
+        trinoEnv.add("-D" + k + "=" + v);
+    }
+
+    public void putEnv(String kv) {
+        trinoEnv.add("-D" + kv);
+    }
+
+    public void put(String kv) {
+        trinoEnv.add(kv);
+    }
+
+    public void putEnvExport(String kv) {
+        trinoEnvExport.add(kv);
     }
 }

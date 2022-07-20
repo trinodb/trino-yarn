@@ -22,13 +22,27 @@ public class JobInfo {
 
     private String jdk11Home;
     private String sql;
-    private String pluginPath;
-    private String libPath;
-    private String configPath;
-    private String catalogInfo;
+    private String path;
     private String ip;
     private int port;
     private String email;
+
+    public String getPluginPath() {
+        return path + "/plugin";
+    }
+
+    public String getLibPath() {
+        return path + "/lib";
+    }
+
+    public String getCatalog() {
+        return path + "/catalog";
+    }
+
+    public String getProcname(String os) {
+        return "LD_PRELOAD=:" + path + "/bin/procname/" + os + "/libprocname.so";
+    }
+
 
     public JSONObject toJson() {
         return JSONUtil.parseObj(this);

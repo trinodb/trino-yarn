@@ -76,10 +76,11 @@ public class Constants {
      * export LC_ALL=zh_CN.UTF-8
      * export EXTRA_ARGS="--server http://ip-*-*-*-*.vpc.internal:8889"
      */
-    public static final String TRINO_ENV_CONTENT = "export JAVA_HOME={}\n" +
-            "export PATH=$JAVA_HOME/bin:$PATH\n" +
-            "export LC_ALL=zh_CN.UTF-8\n" +
-            "export EXTRA_ARGS=\"--server http://{}:{}\"";
+    public static final String TRINO_ENV_CONTENT = "JAVA_HOME={}\n" +
+            "PATH=$JAVA_HOME/bin:$PATH\n" +
+            "LC_ALL=zh_CN.UTF-8\n" +
+            "LANG=zh_CN.UTF-8\n" +
+            "EXTRA_ARGS=\"--server http://{}:{}\"";
 
     public static final String TRINO_NODE = "node.properties";
 
@@ -93,7 +94,7 @@ public class Constants {
     public static final String TRINO_NODE_CONTENT = "node.environment=production\n" +
             "node.id={}\n" +
             "node.data-dir={}/data\n" +
-            "catalog.config-dir={}/conf/catalog\n" +
+            "catalog.config-dir={}\n" +
             "plugin.dir={}";
 
 
@@ -149,6 +150,10 @@ public class Constants {
             "log.max-size=268435456B\n" +
             "log.max-history=5";
 
-    public static final String DATAX_SCRIPT_PYTHON = "#!/bin/bash\n/usr/bin/python %s/bin/datax.py --jvm=\"-Xms%dm -Xmx%dm\" %s";
+    public static final String LOG_OUTPUT_FILE = "log.output-file";
+
+    public static final String LOG_LEVELS_FILE = "log.levels-file";
+
+    public static final String CONFIG = "config";
 
 }

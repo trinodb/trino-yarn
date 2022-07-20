@@ -14,12 +14,16 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.SystemPropsUtil;
 import cn.hutool.http.ContentType;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.Server;
 import org.junit.Test;
+
+import java.util.Map;
+import java.util.Properties;
 
 public class AdminTest {
 
@@ -60,16 +64,25 @@ public class AdminTest {
         dataResponse = HttpUtil.post(url, data3);
         assert dataResponse.equals(data3);
     }
-    
+
     @Test
     public void jobInfo() {
         JobInfo jobInfo = new JobInfo();
         jobInfo.setSql("select * from table");
-        jobInfo.setLibPath("/home/trino/lib");
-        jobInfo.setConfigPath("/home/trino/config");
-        jobInfo.setCatalogInfo("catalogInfo");
+        jobInfo.setPath("/home/trino/lib");
         jobInfo.setIp("localhost");
         jobInfo.setPort(8080);
         System.out.println(jobInfo);
+    }
+
+    @Test
+    public void linux_x86_64() {
+        String system = System.getProperty("os.name", "Linux") + "-" + System.getProperty("os.arch", "x86_64");
+        System.out.println(system);
+        System.out.println("-----------------------");
+        Properties props = SystemPropsUtil.getProps();
+        for (Map.Entry<Object, Object> objectObjectEntry : props.entrySet()) {
+            System.out.println(objectObjectEntry.getKey() + " = " + objectObjectEntry.getValue());
+        }
     }
 }
