@@ -18,8 +18,14 @@ sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
   -job_info '{"sql":"select * from table","jdk11Home":"/mnt/dss","path":"/mnt/dss"}'
 ```
 
+### 日志
+
+```shell
+sudo yarn logs -applicationId application_1642747413846_0462
+```
+
 ### 停止
 
 ```shell
-sudo yarn logs -applicationId  application_1642747413846_0462
+sudo yarn application -kill application_1642747413846_0462
 ```
