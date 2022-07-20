@@ -74,6 +74,11 @@ public class TrinoExecutor {
         return exec;
     }
 
+    /**
+     * 构造启动脚本/环境变量
+     *
+     * @return
+     */
     private String createConf() {
         String path = new File("./").getAbsolutePath();
         LOG.warn("trino conf path:" + path);
