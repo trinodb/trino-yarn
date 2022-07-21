@@ -19,7 +19,7 @@ sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
   -job_info  /mnt/dss/trino/testJob.json
 ```
 
-job_info
+* job_info参数
 
 ```json
 {
@@ -30,7 +30,19 @@ job_info
 }
 ```
 
-还支持将master日志打到Client
+* job_info自定义用户提交
+
+```json
+{
+  "sql": "insert into tmp.pe_ttm_35(stock_code, pe_ttm,date,pt) values('qw', rand()/random(),'1','2')",
+  "jdk11Home": "/usr/lib/jvm/java-11-amazon-corretto.x86_64",
+  "path": "/mnt/dss/trino",
+  "catalog": "/mnt/dss/trino/catalog",
+  "user": "hanmin.du"
+}
+```
+
+* job_info将master日志打到Client
 
 ```json
 {
