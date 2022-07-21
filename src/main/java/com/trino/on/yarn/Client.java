@@ -14,6 +14,7 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -133,7 +134,6 @@ public class Client {
      * @param args Command line arguments
      */
     public static void main(String[] args) {
-
         boolean result = false;
         try {
             Client client = new Client();
@@ -226,9 +226,8 @@ public class Client {
      * @throws ParseException
      */
     public boolean init(String[] args) throws ParseException {
-
-        CommandLine cliParser = new GnuParser().parse(opts, args);
-
+        CommandLineParser gnuParser = new GnuParser();
+        CommandLine cliParser = gnuParser.parse(opts, args);
         if (args.length == 0) {
             throw new IllegalArgumentException("No args specified for client to initialize");
         }
@@ -291,7 +290,9 @@ public class Client {
         if (!cliParser.hasOption("job_info")) {
             throw new IllegalArgumentException("job_info isBlank");
         }
-        String jobInfoStr = cliParser.getOptionValue("job_info");
+        String jobInfoPath = cliParser.getOptionValue("job_info");
+        String jobInfoStr = FileUtil.readUtf8String(jobInfoPath);
+
         if (StrUtil.isNotBlank(jobInfoStr) && JSONUtil.isTypeJSONObject(jobInfoStr)) {
             jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
             if (jobInfo == null) {
@@ -300,6 +301,7 @@ public class Client {
         } else
             throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
 
+        LOG.warn("jobInfo:" + jobInfo);
         simpleServer = ClientServer.initClient();
         InetSocketAddress inetSocketAddress = simpleServer.getAddress();
         jobInfo.setPort(inetSocketAddress.getPort());

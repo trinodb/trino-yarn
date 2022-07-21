@@ -13,6 +13,7 @@
  */
 package com.trino.on.yarn;
 
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.SystemPropsUtil;
 import cn.hutool.http.ContentType;
@@ -20,6 +21,7 @@ import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.Server;
+import org.apache.commons.cli.*;
 import org.junit.Test;
 
 import java.util.Map;
@@ -89,5 +91,34 @@ public class AdminTest {
 
     }
 
+    public static void main(String[] args) throws ParseException {
+        System.out.println("args:" + ArrayUtil.toString(args));
+        new AdminTest().testOptions(args);
+    }
+
+    @Test
+    public void cliTest() throws ParseException {
+        String[] arg = {"-p", "localhost", "-g", "-n", "{\"sql\":\"insert into tmp.pe_ttm_35(stock_code, pe_ttm,date,pt) values('qw', rand()/random(),'1','2')\",\"jdk11Home\":\"/usr/lib/jvm/java-11-amazon-corretto.x86_64\",\"path\":\"/mnt/dss/trino\",\"catalog\":\"/mnt/dss/trino/catalog\",\"debug\":true}"};
+        testOptions(arg);
+    }
+
+    public void testOptions(String[] args) throws ParseException {
+        //Create GNU like options
+        Options gnuOptions = new Options();
+        gnuOptions.addOption("p", "print", false, "Print")
+                .addOption("g", "gui", false, "GUI")
+                .addOption("n", true, "Scale");
+        CommandLineParser gnuParser = new GnuParser();
+        CommandLine cmd = gnuParser.parse(gnuOptions, args);
+        if (cmd.hasOption("p")) {
+            System.out.println("p option was used.");
+        }
+        if (cmd.hasOption("g")) {
+            System.out.println("g option was used.");
+        }
+        if (cmd.hasOption("n")) {
+            System.out.println("Value passed: " + cmd.getOptionValue("n"));
+        }
+    }
 
 }
