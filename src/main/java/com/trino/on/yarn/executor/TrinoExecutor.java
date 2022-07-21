@@ -22,6 +22,8 @@ import cn.hutool.core.text.StrPool;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.cron.CronUtil;
+import cn.hutool.cron.task.Task;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
@@ -41,6 +43,7 @@ public class TrinoExecutor {
     private JobInfo jobInfo;
     private SimpleServer server;
     private int amMemory;
+    private String clientLogApi;
     private String ip = Server.ip();
     private int trinoPort = NetUtil.getUsableLocalPort();
     private static final List<String> trinoEnv = CollUtil.newArrayList();
@@ -50,6 +53,17 @@ public class TrinoExecutor {
         this.jobInfo = jobInfo;
         this.server = server;
         this.amMemory = amMemory;
+        clientLogApi = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
+        CronUtil.schedule("*/5 * * * * *", (Task) () -> {
+            try {
+                HttpUtil.post(clientLogApi, "the heartbeat detection......", 3000);
+            } catch (Exception e) {
+                Server.setMasterFinish(2);
+                throw new RuntimeException("client is stop", e);
+            }
+        });
+        CronUtil.setMatchSecond(true);
+        CronUtil.start();
     }
 
     public Process run() {
@@ -88,17 +102,15 @@ public class TrinoExecutor {
     }
 
     private void log(Process exec) throws InterruptedException {
-        String clientRun = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
         IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) line -> {
             if (StrUtil.contains(line, "======== SERVER STARTED ========")) {
                 end();
             }
             LOG.info(line);
             if (jobInfo.isDebug()) {
-                HttpUtil.post(clientRun, line);
+                HttpUtil.post(clientLogApi, line, 10000);
             }
         });
-
         int exitCode = exec.waitFor();
         assert (exitCode == 0);
     }
@@ -163,8 +175,6 @@ public class TrinoExecutor {
     }
 
     public void end() {
-        LOG.warn("----------------------------" + jobInfo.getSql());
-
         String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
         String body = JSONUtil.createObj()
                 .putOpt("ip", Server.ip())
@@ -173,7 +183,7 @@ public class TrinoExecutor {
                 .putOpt("email", jobInfo.getEmail())
                 .putOpt("sql", jobInfo.getSql())
                 .putOpt("start", true).toString();
-        HttpUtil.post(clientRun, body);
+        HttpUtil.post(clientRun, body, 10000);
     }
 
     public void putEnv(String k, String v) {

@@ -58,4 +58,8 @@ public class Server {
     public static String formatUrl(String urlSuffix, String ip, int port) {
         return StrUtil.format(HTTP + urlSuffix, ip, port);
     }
+
+    public static void setMasterFinish(Integer masterFinish) {
+        MASTER_FINISH = masterFinish;
+    }
 }
