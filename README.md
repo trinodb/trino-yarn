@@ -3,6 +3,7 @@
 trino-yarn可以让trino在yarn上运行
 
 * master_memory内存为trino实际使用内存(master+node)
+* 由于trino保留0.3倍内存用于缓存,所以能使用master_memory可能比实际内存小
 * yarn master内存内置128m(一般不需要修改)
 * run参数设置yarn-per/yarn-session,yarn-per一次性进程,yarn-session常驻进程
 
@@ -15,19 +16,30 @@ sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
   -appname DemoApp \
   -master_memory 1024 \
   -queue default \
-  -job_info '{"sql":"select * from table","jdk11Home":/usr/lib/jvm/java-11-amazon-corretto.x86_64","path":"/mnt/dss/trino","catalog":"/mnt/dss/trino/catalog"}'
+  -job_info  /mnt/dss/trino/testJob.json
+```
+
+job_info
+
+```json
+{
+  "sql": "insert into tmp.pe_ttm_35(stock_code, pe_ttm,date,pt) values('qw', rand()/random(),'1','2')",
+  "jdk11Home": "/usr/lib/jvm/java-11-amazon-corretto.x86_64",
+  "path": "/mnt/dss/trino",
+  "catalog": "/mnt/dss/trino/catalog"
+}
 ```
 
 还支持将master日志打到Client
 
-```shell
-sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
-  -jar_path /mnt/dss/trino-on-yarn-1.0.0.jar \
-  -run_type yarn-per \
-  -appname DemoApp \
-  -master_memory 1024 \
-  -queue default \
-  -job_info '{"sql":"select * from table","jdk11Home":"/usr/lib/jvm/java-11-amazon-corretto.x86_64","path":"/mnt/dss/trino","catalog":"/mnt/dss/trino/catalog","test":true,"debug":true}'
+```json
+{
+  "sql": "insert into tmp.pe_ttm_35(stock_code, pe_ttm,date,pt) values('qw', rand()/random(),'1','2')",
+  "jdk11Home": "/usr/lib/jvm/java-11-amazon-corretto.x86_64",
+  "path": "/mnt/dss/trino",
+  "catalog": "/mnt/dss/trino/catalog",
+  "debug": true
+}
 ```
 
 ### 日志

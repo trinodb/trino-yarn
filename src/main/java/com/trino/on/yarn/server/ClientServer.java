@@ -33,7 +33,7 @@ public class ClientServer extends Server {
                     TrinoJdbc.run(ip, trinoPort, email, sql);
                 } catch (Exception e) {
                     start.putOpt("start", 2);
-                    LOG.error("TrinoJdbc.run error", e);
+                    LOG.error("TrinoJdbc.run error,sql:" + sql, e);
                 }
 
                 Integer port = clientRun.getInt("port");

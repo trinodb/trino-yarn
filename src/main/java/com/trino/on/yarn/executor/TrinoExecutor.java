@@ -19,7 +19,7 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.text.StrPool;
-import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
@@ -52,10 +52,8 @@ public class TrinoExecutor {
         this.amMemory = amMemory;
     }
 
-    public Process run() throws InterruptedException {
-        Process exec = start();
-        end();
-        return exec;
+    public Process run() {
+        return start();
     }
 
     /**
@@ -63,18 +61,38 @@ public class TrinoExecutor {
      *
      * @return
      */
-    public Process start() throws InterruptedException {
-        createConf();
+    public Process start() {
+        String conf = createConf();
         Process exec;
+        String cmds = "ls -la ./ && ls -la ./conf";
+
         if (jobInfo.isTest()) {
-            exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), "ls -la ./ && ls -la ./conf");
+            exec = RuntimeUtil.exec(cmds);
         } else {
-            exec = RuntimeUtil.exec(ArrayUtil.toArray(trinoEnvExport, String.class), ArrayUtil.toArray(trinoEnv, String.class));
+            cmds = StrUtil.join(StrPool.LF, trinoEnvExport) + StrPool.LF + StrUtil.join(" ", trinoEnv);
+            LOG.warn(cmds);
+            String path = conf + "/" + StrUtil.uuid() + ".sh";
+            File file = FileUtil.writeUtf8String(cmds, path);
+            exec = RuntimeUtil.exec("sh " + file.getAbsolutePath());
         }
-        LOG.warn(JSONUtil.toJsonStr(trinoEnv));
-        LOG.warn(JSONUtil.toJsonStr(trinoEnvExport));
+
+        ThreadUtil.execAsync(() -> {
+            try {
+                log(exec);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        return exec;
+    }
+
+    private void log(Process exec) throws InterruptedException {
         String clientRun = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
         IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) line -> {
+            if (StrUtil.contains(line, "======== SERVER STARTED ========")) {
+                end();
+            }
             LOG.info(line);
             if (jobInfo.isDebug()) {
                 HttpUtil.post(clientRun, line);
@@ -83,7 +101,6 @@ public class TrinoExecutor {
 
         int exitCode = exec.waitFor();
         assert (exitCode == 0);
-        return exec;
     }
 
     /**
@@ -92,7 +109,7 @@ public class TrinoExecutor {
      * @return
      */
     private String createConf() {
-        String path = new File("./").getAbsolutePath();
+        String path = new File(".").getAbsolutePath();
         LOG.warn("trino conf path:" + path);
         LOG.warn("trino lib path:" + jobInfo.getPath());
         final String conf = path + "/conf/";
@@ -102,13 +119,10 @@ public class TrinoExecutor {
         FileUtil.mkdir(conf);
         FileUtil.mkdir(data);
 
-        String logInfo = "WARN";
-        if (jobInfo.isDebug()) {
-            logInfo = "INFO";
-        }
-        String log = StrUtil.format(TRINO_LOG_CONTENT, logInfo);
+        String log = StrUtil.format(TRINO_LOG_CONTENT, "INFO");
         File file = FileUtil.writeUtf8String(log, conf + TRINO_LOG);
-        String config = StrUtil.format(TRINO_CONFIG_CONTENT, ip, trinoPort, amMemory, amMemory, amMemory, trinoPort, path);
+        int nodeMemory = amMemory / 3 * 2;
+        String config = StrUtil.format(TRINO_CONFIG_CONTENT, ip, trinoPort, amMemory, nodeMemory, nodeMemory, trinoPort, path);
         File configEnv = FileUtil.writeUtf8String(config, conf + TRINO_CONFIG);
 
         //写入运行参数
@@ -149,6 +163,8 @@ public class TrinoExecutor {
     }
 
     public void end() {
+        LOG.warn("----------------------------" + jobInfo.getSql());
+
         String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
         String body = JSONUtil.createObj()
                 .putOpt("ip", Server.ip())
@@ -173,6 +189,6 @@ public class TrinoExecutor {
     }
 
     public void putEnvExport(String kv) {
-        trinoEnvExport.add(kv);
+        trinoEnvExport.add("export " + kv);
     }
 }
