@@ -5,7 +5,7 @@ trino-yarn可以让trino在yarn上运行
 * master_memory内存为trino实际使用内存(master+node)
 * 由于trino保留0.3倍内存用于缓存,所以能使用master_memory可能比实际内存小
 * yarn master内存内置128m(一般不需要修改)
-* run参数设置yarn-per(已实现单master运行)/yarn-session,yarn-per一次性进程,yarn-session常驻进程
+* run参数设置yarn-per(已实现单master运行)/yarn-session(待实现),yarn-per一次性进程,yarn-session常驻进程
 
 ### 启动
 
