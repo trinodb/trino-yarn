@@ -174,7 +174,7 @@ public class TrinoExecutor {
         if (FileUtil.exist(procname)) {
             putEnvExport("LD_PRELOAD=:" + procname);
         }
-
+        putEnvExport("PROCNAME=" + "trino-server");
         return path;
     }
 
