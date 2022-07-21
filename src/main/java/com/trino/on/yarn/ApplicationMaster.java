@@ -15,6 +15,7 @@ package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.RuntimeUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
@@ -289,6 +290,9 @@ public class ApplicationMaster {
         String jobInfoStr = Base64.decodeStr(cliParser.getOptionValue("job_info"));
         jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
         LOG.warn("jobInfo:" + jobInfo);
+        if (StrUtil.isNotBlank(jobInfo.getUser())) {
+            System.setProperty("HADOOP_USER_NAME", jobInfo.getUser());
+        }
 
         simpleServer = MasterServer.initMaster();
 

@@ -130,6 +130,7 @@ public class Client {
      * private String dataxHomeArchivePath = "";
      */
 
+
     /**
      * @param args Command line arguments
      */
@@ -302,6 +303,11 @@ public class Client {
             throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
 
         LOG.warn("jobInfo:" + jobInfo);
+
+        if (StrUtil.isNotBlank(jobInfo.getUser())) {
+            System.setProperty("HADOOP_USER_NAME", jobInfo.getUser());
+        }
+
         simpleServer = ClientServer.initClient();
         InetSocketAddress inetSocketAddress = simpleServer.getAddress();
         jobInfo.setPort(inetSocketAddress.getPort());

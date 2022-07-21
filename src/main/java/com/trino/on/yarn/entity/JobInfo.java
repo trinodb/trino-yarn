@@ -28,6 +28,7 @@ public class JobInfo {
     private String email;
     private boolean test;
     private boolean debug;
+    private String user;
 
     public String getPluginPath() {
         return path + "/plugin";
