@@ -172,7 +172,7 @@ public class TrinoExecutor {
         String procname = jobInfo.getProcname(osInfo);
 
         if (FileUtil.exist(procname)) {
-            putEnvExport(procname);
+            putEnvExport("LD_PRELOAD=:" + procname);
         }
 
         return path;

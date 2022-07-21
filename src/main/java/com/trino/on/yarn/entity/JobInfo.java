@@ -42,7 +42,7 @@ public class JobInfo {
     }
 
     public String getProcname(String os) {
-        return "LD_PRELOAD=:" + path + "/bin/procname/" + os + "/libprocname.so";
+        return path + "/bin/procname/" + os + "/libprocname.so";
     }
 
 
