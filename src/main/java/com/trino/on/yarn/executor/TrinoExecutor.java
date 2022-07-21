@@ -164,7 +164,11 @@ public class TrinoExecutor {
         for (String env : StrUtil.split(envs, StrPool.LF)) {
             putEnvExport(env);
         }
-        String osInfo = System.getProperty("os.name", "Linux") + "-" + System.getProperty("os.arch", "x86_64");
+        String arch = System.getProperty("os.arch", "x86_64");
+        if (arch.equalsIgnoreCase("amd64")) {
+            arch = "x86_64";
+        }
+        String osInfo = System.getProperty("os.name", "Linux") + "-" + arch;
         String procname = jobInfo.getProcname(osInfo);
 
         if (FileUtil.exist(procname)) {
