@@ -184,7 +184,7 @@ public class TrinoExecutor {
                 .putOpt("ip", Server.ip())
                 .putOpt("port", server.getAddress().getPort())
                 .putOpt("trinoPort", trinoPort)
-                .putOpt("email", jobInfo.getEmail())
+                .putOpt("user", jobInfo.getUser())
                 .putOpt("sql", jobInfo.getSql())
                 .putOpt("start", true).toString();
         HttpUtil.post(clientRun, body, 10000);

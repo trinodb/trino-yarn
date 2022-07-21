@@ -26,11 +26,11 @@ public class ClientServer extends Server {
                     && clientRun.getBool("start", false)) {
                 String ip = clientRun.getStr("ip");
                 Integer trinoPort = clientRun.getInt("trinoPort");
-                String email = clientRun.getStr("email");
+                String user = clientRun.getStr("user");
                 String sql = clientRun.getStr("sql");
                 try {
                     start.putOpt("start", 1);
-                    TrinoJdbc.run(ip, trinoPort, email, sql);
+                    TrinoJdbc.run(ip, trinoPort, user, sql);
                 } catch (Exception e) {
                     start.putOpt("start", 2);
                     LOG.error("TrinoJdbc.run error,sql:" + sql, e);
