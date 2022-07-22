@@ -71,5 +71,5 @@ sudo yarn application -kill application_1642747413846_0462
 
 ### appendix
 
-* [jdk11下载](https://jdk.java.net/java-se-ri/11)
-* [trino下载](https://repo1.maven.org/maven2/io/trino/trino-server/363/)
+* [jdk11](https://jdk.java.net/java-se-ri/11)
+* [trino](https://repo1.maven.org/maven2/io/trino/trino-server/363/)
