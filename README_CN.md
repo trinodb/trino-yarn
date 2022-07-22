@@ -12,7 +12,7 @@ trino-yarn可以让trino在yarn上运行
 ### 启动
 
 ```shell
-sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
+/usr/bin/yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
   -jar_path /mnt/dss/trino-on-yarn-1.0.0.jar \
   -run_type yarn-per \
   -appname DemoApp \
@@ -59,13 +59,13 @@ sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
 ### 日志
 
 ```shell
-sudo yarn logs -applicationId application_1642747413846_0462
+/usr/bin/yarn logs -applicationId application_1642747413846_0462
 ```
 
 ### 停止
 
 ```shell
-sudo yarn application -kill application_1642747413846_0462
+/usr/bin/yarn application -kill application_1642747413846_0462
 ```
 
 ### 附录

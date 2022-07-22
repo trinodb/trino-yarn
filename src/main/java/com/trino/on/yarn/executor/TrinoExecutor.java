@@ -44,6 +44,8 @@ public class TrinoExecutor {
     private SimpleServer server;
     private int amMemory;
     private String clientLogApi;
+    private Process process;
+    private boolean endStart = false;
     private String ip = Server.ip();
     private int trinoPort = NetUtil.getUsableLocalPort();
     private static final List<String> trinoEnv = CollUtil.newArrayList();
@@ -59,6 +61,7 @@ public class TrinoExecutor {
                 HttpUtil.post(clientLogApi, "the heartbeat detection......", 3000);
             } catch (Exception e) {
                 Server.setMasterFinish(2);
+                process.destroy();
                 throw new RuntimeException("client is stop", e);
             }
         });
@@ -67,7 +70,8 @@ public class TrinoExecutor {
     }
 
     public Process run() {
-        return start();
+        process = start();
+        return process;
     }
 
     /**
@@ -103,8 +107,12 @@ public class TrinoExecutor {
 
     private void log(Process exec) throws InterruptedException {
         IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) line -> {
-            if (StrUtil.contains(line, "======== SERVER STARTED ========")) {
-                end();
+            if (StrUtil.contains(line, "======== SERVER STARTED ========") ||
+                    StrUtil.contains(line, "==========")) {
+                if (!endStart) {
+                    endStart = true;
+                    end();
+                }
             }
             LOG.info(line);
             if (jobInfo.isDebug()) {
@@ -131,7 +139,7 @@ public class TrinoExecutor {
         FileUtil.mkdir(conf);
         FileUtil.mkdir(data);
 
-        String log = StrUtil.format(TRINO_LOG_CONTENT, "INFO");
+        String log = StrUtil.format(TRINO_LOG_CONTENT, "WARN");
         File file = FileUtil.writeUtf8String(log, conf + TRINO_LOG);
         int nodeMemory = amMemory / 3 * 2;
         String config = StrUtil.format(TRINO_CONFIG_CONTENT, ip, trinoPort, amMemory, nodeMemory, nodeMemory, trinoPort, path);

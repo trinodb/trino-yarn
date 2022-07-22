@@ -19,12 +19,14 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.trino.on.yarn.constant.Constants;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.executor.TrinoExecutor;
 import com.trino.on.yarn.server.MasterServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
+import com.trino.on.yarn.util.YarnHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
@@ -153,9 +155,10 @@ public class ApplicationMaster {
 
     private final String appNodeMainClass;
 
+    private static Process exec = null;
+
     public static void main(String[] args) {
         boolean result = false;
-        Process exec = null;
         try {
             ApplicationMaster appMaster = new ApplicationMaster();
             LOG.info("Initializing ApplicationMaster");
@@ -223,7 +226,7 @@ public class ApplicationMaster {
     public ApplicationMaster() {
         // Set up the configuration
         conf = new YarnConfiguration();
-        appNodeMainClass = ApplicationMaster.class.getName();
+        appNodeMainClass = ApplicationNode.class.getName();
     }
 
     /**
@@ -363,7 +366,7 @@ public class ApplicationMaster {
             }
         }
 
-        containerMemory = Integer.parseInt(cliParser.getOptionValue("container_memory", "10"));
+        containerMemory = Integer.parseInt(cliParser.getOptionValue("container_memory", "128"));
         containerVirtualCores = Integer.parseInt(cliParser.getOptionValue("container_vcores", "1"));
         numTotalContainers = Integer.parseInt(cliParser.getOptionValue("num_containers", "1"));
         memoryOverhead = Integer.parseInt(cliParser.getOptionValue("memory_overhead", "1"));
@@ -737,6 +740,7 @@ public class ApplicationMaster {
         @Override
         public void onShutdownRequest() {
             done = true;
+            exec.destroy();
         }
 
         @Override
@@ -753,6 +757,7 @@ public class ApplicationMaster {
         @Override
         public void onError(Throwable e) {
             done = true;
+            exec.destroy();
             amRMClient.stop();
         }
     }
@@ -787,14 +792,66 @@ public class ApplicationMaster {
          */
         @Override
         public void run() {
-            LOG.info("Setting up container launch container for containerId=" + container.getId());
+            LOG.info("Setting up container launch container for containerId="
+                    + container.getId());
 
-            String command = System.getenv("JAVA_HOME") + "/bin/java -version";
+            Map<String, String> currentEnvs = System.getenv();
+            if (!currentEnvs.containsKey(Constants.JAR_FILE_PATH)) {
+                throw new RuntimeException(Constants.JAR_FILE_PATH
+                        + " not set in the environment.");
+            }
+            String frameworkPath = currentEnvs.get(Constants.JAR_FILE_PATH);
+
+            shellEnv.put("CLASSPATH", YarnHelper.buildClassPathEnv(conf));
+
+            // Set the local resources
+            Map<String, LocalResource> localResources = new HashMap<>(4);
+
+            try {
+                YarnHelper.addFrameworkToDistributedCache(frameworkPath, localResources, conf);
+            } catch (IOException e) {
+                Throwables.propagate(e);
+            }
+
+            // Set the necessary command to execute on the allocated container
+            Vector<CharSequence> vargs = new Vector<CharSequence>(10);
+
+            // Set java executable command
+            vargs.add(ApplicationConstants.Environment.JAVA_HOME.$$() + "/bin/java");
+            // Set am memory size
+            vargs.add("-Xms" + containerMemory + "m");
+            vargs.add("-Xmx" + containerMemory + "m");
+            vargs.add(javaOpts);
+
+            // Set tmp dir
+            vargs.add("-Djava.io.tmpdir=$PWD/tmp");
+
+            // Set log4j configuration file
+            // vargs.add("-Dlog4j.configuration=" + Constants.NESTO_YARN_APPCONTAINER_LOG4J);
+
+            // Set class name
+            vargs.add(appNodeMainClass);
+
+            // Set args for the shell command if any
+            vargs.add(shellArgs);
+            // Add log redirect params
+
+            vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout");
+            vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");
+
+            // Get final command
+            StringBuilder command = new StringBuilder();
+            for (CharSequence str : vargs) {
+                command.append(str).append(" ");
+            }
+
+            LOG.info("Shell command is: \n" + command);
+
             List<String> commands = new ArrayList<>();
-            commands.add(command);
+            commands.add(command.toString());
 
             ContainerLaunchContext ctx = ContainerLaunchContext.newInstance(
-                    null, shellEnv, commands, null, allTokens.duplicate(), null);
+                    localResources, shellEnv, commands, null, allTokens.duplicate(), null);
             runningContainers.putIfAbsent(container.getId(), container);
             containerListener.addContainer(container.getId(), container);
             nmClientAsync.startContainerAsync(container, ctx);

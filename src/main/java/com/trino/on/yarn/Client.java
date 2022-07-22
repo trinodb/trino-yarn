@@ -659,6 +659,7 @@ public class Client {
                 }
             } else if (YarnApplicationState.KILLED == state
                     || YarnApplicationState.FAILED == state) {
+
                 LOG.info("Application did not finish."
                         + " YarnState=" + state + ", DSFinalStatus=" + dsStatus.toString()
                         + ". Breaking monitoring loop");
