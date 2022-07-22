@@ -55,6 +55,8 @@ sudo yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
   "debug": true
 }
 ```
+* 运行示例
+![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)
 
 ### 日志
 
