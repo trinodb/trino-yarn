@@ -17,15 +17,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
-import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.cron.CronUtil;
-import cn.hutool.cron.task.Task;
 import cn.hutool.http.HttpUtil;
-import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.Server;
@@ -41,32 +37,17 @@ public class TrinoExecutor {
     protected static final Log LOG = LogFactory.getLog(TrinoExecutor.class);
 
     private JobInfo jobInfo;
-    private SimpleServer server;
     private int amMemory;
     private String clientLogApi;
     private Process process;
     private boolean endStart = false;
-    private String ip = Server.ip();
-    private int trinoPort = NetUtil.getUsableLocalPort();
     private static final List<String> trinoEnv = CollUtil.newArrayList();
     private static final List<String> trinoEnvExport = CollUtil.newArrayList();
 
-    public TrinoExecutor(JobInfo jobInfo, SimpleServer server, int amMemory) {
+    public TrinoExecutor(JobInfo jobInfo, int amMemory) {
         this.jobInfo = jobInfo;
-        this.server = server;
         this.amMemory = amMemory;
         clientLogApi = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
-        CronUtil.schedule("*/5 * * * * *", (Task) () -> {
-            try {
-                HttpUtil.post(clientLogApi, "the heartbeat detection......", 3000);
-            } catch (Exception e) {
-                Server.setMasterFinish(2);
-                process.destroy();
-                throw new RuntimeException("client is stop", e);
-            }
-        });
-        CronUtil.setMatchSecond(true);
-        CronUtil.start();
     }
 
     public Process run() {
@@ -142,7 +123,7 @@ public class TrinoExecutor {
         String log = StrUtil.format(TRINO_LOG_CONTENT, "WARN");
         File file = FileUtil.writeUtf8String(log, conf + TRINO_LOG);
         int nodeMemory = amMemory / 3 * 2;
-        String config = StrUtil.format(TRINO_CONFIG_CONTENT, ip, trinoPort, amMemory, nodeMemory, nodeMemory, trinoPort, path);
+        String config = StrUtil.format(TRINO_CONFIG_CONTENT, jobInfo.getIpMaster(), jobInfo.getPortTrino(), amMemory, nodeMemory, nodeMemory, jobInfo.getPortTrino(), path);
         File configEnv = FileUtil.writeUtf8String(config, conf + TRINO_CONFIG);
 
         //写入运行参数
@@ -168,7 +149,7 @@ public class TrinoExecutor {
         put("io.trino.server.TrinoServer");
 
         //写入环境变量
-        String envs = StrUtil.format(TRINO_ENV_CONTENT, jobInfo.getJdk11Home(), ip, trinoPort);
+        String envs = StrUtil.format(TRINO_ENV_CONTENT, jobInfo.getJdk11Home(), jobInfo.getIpMaster(), jobInfo.getPortTrino());
         for (String env : StrUtil.split(envs, StrPool.LF)) {
             putEnvExport(env);
         }
@@ -189,9 +170,9 @@ public class TrinoExecutor {
     public void end() {
         String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
         String body = JSONUtil.createObj()
-                .putOpt("ip", Server.ip())
-                .putOpt("port", server.getAddress().getPort())
-                .putOpt("trinoPort", trinoPort)
+                .putOpt("ip", jobInfo.getIpMaster())
+                .putOpt("port", jobInfo.getPortMaster())
+                .putOpt("trinoPort", jobInfo.getPortTrino())
                 .putOpt("user", jobInfo.getUser())
                 .putOpt("sql", jobInfo.getSql())
                 .putOpt("start", true).toString();

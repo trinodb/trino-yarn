@@ -522,7 +522,7 @@ public class Client {
         vargs.add("--num_containers " + numContainers);
         vargs.add("--priority " + shellCmdPriority);
         vargs.add("--master_memory " + this.amMemory);
-        vargs.add("-job_info " + Base64.encode(jobInfo.toString()));
+        vargs.add("--job_info " + Base64.encode(jobInfo.toString()));
 
         for (Map.Entry<String, String> entry : shellEnv.entrySet()) {
             vargs.add("--shell_env " + entry.getKey() + "=" + entry.getValue());

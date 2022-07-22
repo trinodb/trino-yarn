@@ -14,6 +14,7 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -157,6 +158,10 @@ public class ApplicationMaster {
 
     private static Process exec = null;
 
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> exec.destroy()));
+    }
+
     public static void main(String[] args) {
         boolean result = false;
         try {
@@ -167,7 +172,7 @@ public class ApplicationMaster {
                 System.exit(0);
             }
             appMaster.run();
-            exec = new TrinoExecutor(jobInfo, simpleServer, amMemory).run();
+            exec = new TrinoExecutor(jobInfo, amMemory).run();
             while (Server.MASTER_FINISH.equals(0)) {
                 Thread.sleep(500);
             }
@@ -301,6 +306,9 @@ public class ApplicationMaster {
         }
 
         simpleServer = MasterServer.initMaster();
+        jobInfo.setIpMaster(Server.ip());
+        jobInfo.setPortMaster(simpleServer.getAddress().getPort());
+        jobInfo.setPortTrino(NetUtil.getUsableLocalPort());
 
         Map<String, String> envs = System.getenv();
 
@@ -552,6 +560,7 @@ public class ApplicationMaster {
         }
 
         amRMClient.stop();
+        exec.destroy();
 
         return success;
     }
@@ -783,8 +792,6 @@ public class ApplicationMaster {
             this.containerListener = containerListener;
         }
 
-        // TODO: 2022/7/18 这里启动Node节点
-
         /**
          * Connects to CM, sets up container launch context
          * for shell command and eventually dispatches the container
@@ -835,6 +842,8 @@ public class ApplicationMaster {
             // Set args for the shell command if any
             vargs.add(shellArgs);
             // Add log redirect params
+
+            vargs.add("--job_info " + Base64.encode(jobInfo.toString()));
 
             vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout");
             vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");

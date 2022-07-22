@@ -25,6 +25,9 @@ public class JobInfo {
     private String path;
     private String ip;
     private int port;
+    private String ipMaster;
+    private int portMaster;
+    private int portTrino;
     private boolean test;
     private boolean debug;
     private String user;
