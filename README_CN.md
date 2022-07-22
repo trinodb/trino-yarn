@@ -1,5 +1,7 @@
 # trino-on-yarn
 
+[English](README.md) | [中文](README_CN.md)
+
 trino-yarn可以让trino在yarn上运行
 
 * master_memory内存为trino实际使用内存(master+node)
