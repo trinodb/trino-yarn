@@ -151,6 +151,8 @@ public class ApplicationMaster {
 
     private static SimpleServer simpleServer = null;
 
+    private final String appNodeMainClass;
+
     public static void main(String[] args) {
         boolean result = false;
         Process exec = null;
@@ -221,6 +223,7 @@ public class ApplicationMaster {
     public ApplicationMaster() {
         // Set up the configuration
         conf = new YarnConfiguration();
+        appNodeMainClass = ApplicationMaster.class.getName();
     }
 
     /**
@@ -599,12 +602,12 @@ public class ApplicationMaster {
         @Override
         public void onContainerStatusReceived(ContainerId containerId,
                                               ContainerStatus containerStatus) {
-            LOG.debug("Container Status: id=" + containerId + ", status=" + containerStatus);
+            LOG.info("Container Status: id=" + containerId + ", status=" + containerStatus);
         }
 
         @Override
         public void onContainerStarted(ContainerId containerId, Map<String, ByteBuffer> allServiceResponse) {
-            LOG.debug("Succeeded to start Container " + containerId);
+            LOG.info("Succeeded to start Container " + containerId);
             Container container = containers.get(containerId);
             if (container != null) {
                 applicationMaster.nmClientAsync.getContainerStatusAsync(containerId, container.getNodeId());
