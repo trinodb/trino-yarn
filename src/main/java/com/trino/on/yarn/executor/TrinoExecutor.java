@@ -15,8 +15,6 @@ package com.trino.on.yarn.executor;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.io.LineHandler;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
@@ -33,26 +31,30 @@ import java.util.List;
 
 import static com.trino.on.yarn.constant.Constants.*;
 
-public class TrinoExecutor {
+public abstract class TrinoExecutor {
     protected static final Log LOG = LogFactory.getLog(TrinoExecutor.class);
 
-    private JobInfo jobInfo;
-    private int amMemory;
-    private String clientLogApi;
-    private Process process;
-    private boolean endStart = false;
-    private static final List<String> trinoEnv = CollUtil.newArrayList();
-    private static final List<String> trinoEnvExport = CollUtil.newArrayList();
+    protected static final List<String> trinoEnv = CollUtil.newArrayList();
+    protected static final List<String> trinoEnvExport = CollUtil.newArrayList();
+    protected JobInfo jobInfo;
+    protected int amMemory;
+    protected String clientLogApi;
+    protected boolean endStart = false;
+    protected String path;
 
     public TrinoExecutor(JobInfo jobInfo, int amMemory) {
         this.jobInfo = jobInfo;
         this.amMemory = amMemory;
         clientLogApi = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
+        path = new File(".").getAbsolutePath();
     }
 
+    protected abstract void log(Process exec) throws InterruptedException;
+
+    protected abstract String trinoConfig();
+
     public Process run() {
-        process = start();
-        return process;
+        return start();
     }
 
     /**
@@ -86,31 +88,12 @@ public class TrinoExecutor {
         return exec;
     }
 
-    private void log(Process exec) throws InterruptedException {
-        IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) line -> {
-            if (StrUtil.contains(line, "======== SERVER STARTED ========") ||
-                    StrUtil.contains(line, "==========")) {
-                if (!endStart) {
-                    endStart = true;
-                    end();
-                }
-            }
-            LOG.info(line);
-            if (jobInfo.isDebug()) {
-                HttpUtil.post(clientLogApi, line, 10000);
-            }
-        });
-        int exitCode = exec.waitFor();
-        assert (exitCode == 0);
-    }
-
     /**
      * 构造启动脚本/环境变量
      *
      * @return
      */
-    private String createConf() {
-        String path = new File(".").getAbsolutePath();
+    protected String createConf() {
         LOG.warn("trino conf path:" + path);
         LOG.warn("trino lib path:" + jobInfo.getPath());
         final String conf = path + "/conf/";
@@ -122,8 +105,7 @@ public class TrinoExecutor {
 
         String log = StrUtil.format(TRINO_LOG_CONTENT, "WARN");
         File file = FileUtil.writeUtf8String(log, conf + TRINO_LOG);
-        int nodeMemory = amMemory / 3 * 2;
-        String config = StrUtil.format(TRINO_CONFIG_CONTENT, jobInfo.getIpMaster(), jobInfo.getPortTrino(), amMemory, nodeMemory, nodeMemory, jobInfo.getPortTrino(), path);
+        String config = trinoConfig();
         File configEnv = FileUtil.writeUtf8String(config, conf + TRINO_CONFIG);
 
         //写入运行参数
@@ -167,7 +149,7 @@ public class TrinoExecutor {
         return path;
     }
 
-    public void end() {
+    protected void end() {
         String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
         String body = JSONUtil.createObj()
                 .putOpt("ip", jobInfo.getIpMaster())
@@ -179,19 +161,19 @@ public class TrinoExecutor {
         HttpUtil.post(clientRun, body, 10000);
     }
 
-    public void putEnv(String k, String v) {
+    protected void putEnv(String k, String v) {
         trinoEnv.add("-D" + k + "=" + v);
     }
 
-    public void putEnv(String kv) {
+    protected void putEnv(String kv) {
         trinoEnv.add("-D" + kv);
     }
 
-    public void put(String kv) {
+    protected void put(String kv) {
         trinoEnv.add(kv);
     }
 
-    public void putEnvExport(String kv) {
+    protected void putEnvExport(String kv) {
         trinoEnvExport.add("export " + kv);
     }
 }

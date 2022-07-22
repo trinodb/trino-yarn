@@ -1,6 +1,7 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.entity.JobInfo;
@@ -18,9 +19,9 @@ import org.apache.log4j.LogManager;
 public class ApplicationNode {
 
     protected static final Log LOG = LogFactory.getLog(ApplicationNode.class);
-
+    private static Process exec = null;
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> LOG.info("---------------------")));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> RuntimeUtil.destroy(exec)));
     }
 
     JobInfo jobInfo;
@@ -31,12 +32,16 @@ public class ApplicationNode {
             ApplicationNode applicationNode = new ApplicationNode();
             applicationNode.init(args);
 
+
+            LOG.info("ApplicationNode finish");
+            System.exit(0);
         } catch (Throwable t) {
-            LOG.fatal("Error running ApplicationMaster", t);
+            LOG.fatal("Error running ApplicationNode", t);
             LogManager.shutdown();
             ExitUtil.terminate(1, t);
+            System.exit(2);
         } finally {
-            //RuntimeUtil.destroy(exec);
+            RuntimeUtil.destroy(exec);
         }
     }
 

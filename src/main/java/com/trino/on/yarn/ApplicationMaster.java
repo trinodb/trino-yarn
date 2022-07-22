@@ -23,7 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.trino.on.yarn.constant.Constants;
 import com.trino.on.yarn.entity.JobInfo;
-import com.trino.on.yarn.executor.TrinoExecutor;
+import com.trino.on.yarn.executor.TrinoExecutorMaster;
 import com.trino.on.yarn.server.MasterServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
@@ -159,7 +159,7 @@ public class ApplicationMaster {
     private static Process exec = null;
 
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> exec.destroy()));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> RuntimeUtil.destroy(exec)));
     }
 
     public static void main(String[] args) {
@@ -172,7 +172,7 @@ public class ApplicationMaster {
                 System.exit(0);
             }
             appMaster.run();
-            exec = new TrinoExecutor(jobInfo, amMemory).run();
+            exec = new TrinoExecutorMaster(jobInfo, amMemory).run();
             while (Server.MASTER_FINISH.equals(0)) {
                 Thread.sleep(500);
             }
@@ -560,7 +560,7 @@ public class ApplicationMaster {
         }
 
         amRMClient.stop();
-        exec.destroy();
+        RuntimeUtil.destroy(exec);
 
         return success;
     }
@@ -749,7 +749,7 @@ public class ApplicationMaster {
         @Override
         public void onShutdownRequest() {
             done = true;
-            exec.destroy();
+            RuntimeUtil.destroy(exec);
         }
 
         @Override
@@ -766,7 +766,7 @@ public class ApplicationMaster {
         @Override
         public void onError(Throwable e) {
             done = true;
-            exec.destroy();
+            RuntimeUtil.destroy(exec);
             amRMClient.stop();
         }
     }
