@@ -34,6 +34,7 @@ public class TrinoExecutorMaster extends TrinoExecutor {
     @Override
     protected String trinoConfig() {
         int nodeMemory = amMemory / 3 * 2;
-        return StrUtil.format(TRINO_CONFIG_CONTENT, jobInfo.getIpMaster(), jobInfo.getPortTrino(), amMemory, nodeMemory, nodeMemory, jobInfo.getPortTrino(), path);
+        return StrUtil.format(TRINO_CONFIG_CONTENT, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
+                amMemory, nodeMemory, nodeMemory, jobInfo.getPortTrino(), path);
     }
 }
