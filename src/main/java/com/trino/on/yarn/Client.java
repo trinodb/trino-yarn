@@ -312,7 +312,7 @@ public class Client {
         InetSocketAddress inetSocketAddress = simpleServer.getAddress();
         jobInfo.setPort(inetSocketAddress.getPort());
         jobInfo.setIp(Server.ip());
-
+        jobInfo.setRunType(run);
         if (cliParser.hasOption("shell_args")) {
             shellArgs = cliParser.getOptionValues("shell_args");
         }

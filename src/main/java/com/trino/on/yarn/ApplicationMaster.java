@@ -782,6 +782,9 @@ public class ApplicationMaster {
 
         NMCallbackHandler containerListener;
 
+        // Set the local resources
+        Map<String, LocalResource> localResources = new HashMap<>(4);
+
         /**
          * @param lcontainer        Allocated container
          * @param containerListener Callback handler of the container
@@ -801,7 +804,22 @@ public class ApplicationMaster {
         public void run() {
             LOG.info("Setting up container launch container for containerId="
                     + container.getId());
+            List<String> commands = yarnPer();
+            ContainerLaunchContext ctx = ContainerLaunchContext.newInstance(
+                    localResources, shellEnv, commands, null, allTokens.duplicate(), null);
+            runningContainers.putIfAbsent(container.getId(), container);
+            containerListener.addContainer(container.getId(), container);
+            nmClientAsync.startContainerAsync(container, ctx);
+        }
 
+        private List<String> yarnPer() {
+            String command = System.getenv("JAVA_HOME") + "/bin/java -version";
+            List<String> commands = new ArrayList<>();
+            commands.add(command);
+            return commands;
+        }
+
+        private List<String> yarnSession() {
             Map<String, String> currentEnvs = System.getenv();
             if (!currentEnvs.containsKey(Constants.JAR_FILE_PATH)) {
                 throw new RuntimeException(Constants.JAR_FILE_PATH
@@ -810,9 +828,6 @@ public class ApplicationMaster {
             String frameworkPath = currentEnvs.get(Constants.JAR_FILE_PATH);
 
             shellEnv.put("CLASSPATH", YarnHelper.buildClassPathEnv(conf));
-
-            // Set the local resources
-            Map<String, LocalResource> localResources = new HashMap<>(4);
 
             try {
                 YarnHelper.addFrameworkToDistributedCache(frameworkPath, localResources, conf);
@@ -858,12 +873,7 @@ public class ApplicationMaster {
 
             List<String> commands = new ArrayList<>();
             commands.add(command.toString());
-
-            ContainerLaunchContext ctx = ContainerLaunchContext.newInstance(
-                    localResources, shellEnv, commands, null, allTokens.duplicate(), null);
-            runningContainers.putIfAbsent(container.getId(), container);
-            containerListener.addContainer(container.getId(), container);
-            nmClientAsync.startContainerAsync(container, ctx);
+            return commands;
         }
     }
 

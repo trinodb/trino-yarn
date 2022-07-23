@@ -31,6 +31,7 @@ public class JobInfo {
     private boolean test;
     private boolean debug;
     private String user;
+    private String runType;
 
     public String getPluginPath() {
         return path + "/plugin";
