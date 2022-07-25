@@ -4,12 +4,17 @@
 
 trino-yarn可以让trino在yarn上运行
 
-* master_memory内存为trino实际使用内存(master+node)
-* 由于trino保留0.3倍内存用于缓存,所以能使用master_memory可能比实际内存小
-* yarn master内存内置128m(一般不需要修改)
-* run参数设置yarn-per(已实现单master运行)/yarn-session(待实现),yarn-per一次性进程,yarn-session常驻进程
+* 支持yarn单次执行(yarn-per)和yarn常驻进程(yarn-session)
+* 根据经验内置master:node内存比为1:2,只需要设置master_memory即可
+* 由于trino保留0.3倍内存用于缓存,所以每个节点能使用master_memory可能比实际小
+* master_memory内存单位目前支持MB
+* yarn master/node内存内置128m(一般不需要修改)
+* 支持yarn上显示提交用户
+* 支持将master日志打到Client,方便debug
+* trino安装包支持远程目录,例如hdfs/s3等
+* jdk11Home优先使用环境变量JAVA11_HOME,如果没有则使用配置jdk11Home参数
 
-### 启动
+### yarn-per提交任务
 
 ```shell
 /usr/bin/yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
@@ -17,6 +22,7 @@ trino-yarn可以让trino在yarn上运行
   -run_type yarn-per \
   -appname DemoApp \
   -master_memory 1024 \
+  -num_containers 2 \
   -queue default \
   -job_info  /mnt/dss/trino/testJob.json
 ```
@@ -32,7 +38,19 @@ trino-yarn可以让trino在yarn上运行
 }
 ```
 
-* job_info自定义用户提交
+### 参数说明
+
+* run_type
+
+yarn单次执行(yarn-per)和yarn常驻进程(yarn-session)
+
+* master_memory
+
+根据需要设置,其中master:node内存比为1:2,只需要设置master_memory即可,另外trino保留0.3倍内存用于缓存,所以每个节点能使用master_memory可能比实际小
+
+* job_info
+
+例子:
 
 ```json
 {
@@ -40,23 +58,24 @@ trino-yarn可以让trino在yarn上运行
   "jdk11Home": "/usr/lib/jvm/java-11-amazon-corretto.x86_64",
   "path": "/mnt/dss/trino",
   "catalog": "/mnt/dss/trino/catalog",
-  "user": "hanmin.du"
-}
-```
-
-* job_info将master日志打到Client
-
-```json
-{
-  "sql": "insert into tmp.pe_ttm_35(stock_code, pe_ttm,date,pt) values('qw', rand()/random(),'1','2')",
-  "jdk11Home": "/usr/lib/jvm/java-11-amazon-corretto.x86_64",
-  "path": "/mnt/dss/trino",
-  "catalog": "/mnt/dss/trino/catalog",
+  "user": "hanmin.du",
   "debug": true
 }
 ```
+
+参数说明:
+
+参数 |说明
+--- |---
+sql | 需要执行的sql
+jdk11Home | jdk11Home安装路径
+path |trino安装路径
+catalog | trino目录
+user |提交用户
+debug |设置为true可将master日志打到Client
+
 * 运行示例
-![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)
+  ![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)
 
 ### 日志
 
