@@ -71,10 +71,10 @@ parameters | instructions
 --- |---
 SQL | needs to execute SQL
 Jdk11Home | jdk11Home installation path
-The path | trino installation path
-The catalog | trino directory
-The user | submitted to the user
-The debug | is set to true to master log to the Client
+path | trino installation path
+catalog | trino directory
+user | submitted to the user
+debug | is set to true to master log to the Client
 
 * Run the example
   ![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)
