@@ -20,6 +20,7 @@ import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
+import com.trino.on.yarn.constant.RunType;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.Server;
 import org.apache.commons.logging.Log;
@@ -148,15 +149,17 @@ public abstract class TrinoExecutor {
     }
 
     protected void end() {
-        String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
-        String body = JSONUtil.createObj()
-                .putOpt("ip", jobInfo.getIpMaster())
-                .putOpt("port", jobInfo.getPortMaster())
-                .putOpt("trinoPort", jobInfo.getPortTrino())
-                .putOpt("user", jobInfo.getUser())
-                .putOpt("sql", jobInfo.getSql())
-                .putOpt("start", true).toString();
-        HttpUtil.post(clientRun, body, 10000);
+        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
+            String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
+            String body = JSONUtil.createObj()
+                    .putOpt("ip", jobInfo.getIpMaster())
+                    .putOpt("port", jobInfo.getPortMaster())
+                    .putOpt("trinoPort", jobInfo.getPortTrino())
+                    .putOpt("user", jobInfo.getUser())
+                    .putOpt("sql", jobInfo.getSql())
+                    .putOpt("start", true).toString();
+            HttpUtil.post(clientRun, body, 10000);
+        }
     }
 
     protected void putEnv(String k, String v) {
