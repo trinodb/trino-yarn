@@ -102,7 +102,7 @@ public abstract class TrinoExecutor {
         FileUtil.mkdir(data);
 
         String log = StrUtil.format(TRINO_LOG_CONTENT, "WARN");
-        File file = FileUtil.writeUtf8String(log, conf + TRINO_LOG);
+        File logFile = FileUtil.writeUtf8String(log, conf + TRINO_LOG);
         String config = trinoConfig();
         File configEnv = FileUtil.writeUtf8String(config, conf + TRINO_CONFIG);
 
@@ -118,7 +118,7 @@ public abstract class TrinoExecutor {
         for (String jvm : StrUtil.split(jvms, StrPool.LF)) {
             put(jvm);
         }
-        putEnv(LOG_LEVELS_FILE, file.getAbsolutePath());
+        putEnv(LOG_LEVELS_FILE, logFile.getAbsolutePath());
         putEnv(CONFIG, configEnv.getAbsolutePath());
         putEnv(LOG_OUTPUT_FILE, logPath);
         putEnv("log.enable-console=true");
