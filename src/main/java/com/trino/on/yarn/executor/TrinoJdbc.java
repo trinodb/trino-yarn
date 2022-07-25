@@ -39,7 +39,8 @@ public class TrinoJdbc {
         try {
             statement.execute(sql);
         } catch (SQLException e) {
-            if (e.getMessage().contains("initializing")) {
+            String message = e.getMessage();
+            if (message.contains("initializing")) {
                 ThreadUtil.sleep(500);
                 execute(statement, sql);
             } else {

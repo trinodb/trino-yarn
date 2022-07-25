@@ -169,11 +169,11 @@ public class ApplicationMaster {
             ApplicationMaster appMaster = new ApplicationMaster();
             LOG.info("Initializing ApplicationMaster");
             boolean doRun = appMaster.init(args);
+            exec = new TrinoExecutorMaster(jobInfo, amMemory).run();
             if (!doRun) {
                 System.exit(0);
             }
             appMaster.run();
-            exec = new TrinoExecutorMaster(jobInfo, amMemory).run();
             while (Server.MASTER_FINISH.equals(0)) {
                 Thread.sleep(500);
             }
@@ -515,6 +515,9 @@ public class ApplicationMaster {
     protected boolean finish() {
         // wait for completion.
         while (!done) {
+            if (Server.MASTER_FINISH.equals(2)) {
+                break;
+            }
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {

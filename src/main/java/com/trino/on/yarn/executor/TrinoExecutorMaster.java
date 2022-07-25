@@ -31,18 +31,19 @@ public class TrinoExecutorMaster extends TrinoExecutor {
                 HttpUtil.post(clientLogApi, line, 10000);
             }
         }));
-
     }
 
     @Override
     protected String trinoConfig() {
-        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType()) && jobInfo.getNumTotalContainers() == 1) {
-            super.coordinator = true;
+        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
+            if (jobInfo.getNumTotalContainers() == 1) {
+                super.nodeSchedulerIncludeCoordinator = true;
+            }
         } else {
             amMemory = amMemory / 2;
         }
         int nodeMemory = amMemory / 3 * 2;
-        return StrUtil.format(TRINO_CONFIG_CONTENT, super.coordinator, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
+        return StrUtil.format(TRINO_CONFIG_CONTENT, true, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
                 amMemory, nodeMemory, nodeMemory, jobInfo.getPortTrino(), path);
     }
 }

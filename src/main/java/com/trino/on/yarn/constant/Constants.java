@@ -126,8 +126,8 @@ public class Constants {
      * exchange.http-client.max-requests-queued-per-destination=5120
      * exchange.http-client.max-connections-per-server=5120
      */
-    public static final String TRINO_CONFIG_CONTENT = "coordinator={}\n" +
-            "node-scheduler.include-coordinator=true\n" +
+    public static final String TRINO_CONFIG_CONTENT = "coordinator=true\n" +
+            "node-scheduler.include-coordinator={}\n" +
             "discovery.uri=http://{}:{}\n" +
             "http-server.threads.max=500\n" +
             "sink.max-buffer-size=1GB\n" +
@@ -144,7 +144,7 @@ public class Constants {
             "http-server.log.max-size=67108864B\n" +
             "http-server.log.max-history=5\n" +
             "log.max-size=268435456B\n" +
-            "log.max-history=5";
+            "log.max-history=5\n";
 
     public static final String LOG_OUTPUT_FILE = "log.output-file";
 

@@ -19,7 +19,6 @@ import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
-import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.constant.RunType;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.Server;
@@ -41,7 +40,7 @@ public abstract class TrinoExecutor {
     protected String clientLogApi;
     protected boolean endStart = false;
     protected String path;
-    protected boolean coordinator = false;
+    protected boolean nodeSchedulerIncludeCoordinator = false;
 
     public TrinoExecutor(JobInfo jobInfo, int amMemory) {
         this.jobInfo = jobInfo;
@@ -151,14 +150,8 @@ public abstract class TrinoExecutor {
     protected void end() {
         if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
             String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
-            String body = JSONUtil.createObj()
-                    .putOpt("ip", jobInfo.getIpMaster())
-                    .putOpt("port", jobInfo.getPortMaster())
-                    .putOpt("trinoPort", jobInfo.getPortTrino())
-                    .putOpt("user", jobInfo.getUser())
-                    .putOpt("sql", jobInfo.getSql())
-                    .putOpt("start", true).toString();
-            HttpUtil.post(clientRun, body, 10000);
+            jobInfo.setStart(true);
+            HttpUtil.post(clientRun, jobInfo.toString(), 10000);
         }
     }
 

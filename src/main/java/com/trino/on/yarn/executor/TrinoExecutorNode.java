@@ -3,6 +3,7 @@ package com.trino.on.yarn.executor;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
 import cn.hutool.core.net.NetUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import com.trino.on.yarn.entity.JobInfo;
 
@@ -16,13 +17,22 @@ public class TrinoExecutorNode extends TrinoExecutor {
 
     @Override
     protected void log(Process exec) throws InterruptedException {
-        IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) LOG::info);
+        ThreadUtil.execAsync(() -> IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) line -> {
+            if (StrUtil.contains(line, "======== SERVER STARTED ========") ||
+                    StrUtil.contains(line, "==========")) {
+                if (!endStart) {
+                    endStart = true;
+                    end();
+                }
+            }
+            LOG.info(line);
+        }));
     }
 
     @Override
     protected String trinoConfig() {
         int nodeMemory = amMemory / 3 * 2;
-        return StrUtil.format(TRINO_CONFIG_CONTENT, super.coordinator, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
+        return StrUtil.format(TRINO_CONFIG_CONTENT, false, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
                 amMemory, nodeMemory, nodeMemory, NetUtil.getUsableLocalPort(), path);
     }
 }

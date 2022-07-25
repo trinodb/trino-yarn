@@ -13,6 +13,7 @@
  */
 package com.trino.on.yarn.entity;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import lombok.Data;
@@ -27,6 +28,9 @@ public class JobInfo {
     private int port;
     private String ipMaster;
     private int portMaster;
+    private boolean node;
+    private String ipNode;
+    private int portNode;
     private int portTrino;
     private boolean test;
     private boolean debug;
@@ -34,6 +38,7 @@ public class JobInfo {
     private String runType;
     private int numTotalContainers;
     private int amMemory;
+    private boolean start;
 
     public String getPluginPath() {
         return path + "/plugin";
@@ -51,6 +56,12 @@ public class JobInfo {
         return path + "/bin/procname/" + os + "/libprocname.so";
     }
 
+    public String getUser() {
+        if (StrUtil.isNotBlank(user)) {
+            return user;
+        }
+        return "hadoop";
+    }
 
     public JSONObject toJson() {
         return JSONUtil.parseObj(this);
