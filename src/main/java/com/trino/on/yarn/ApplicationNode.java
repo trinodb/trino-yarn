@@ -5,6 +5,7 @@ import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.entity.JobInfo;
+import com.trino.on.yarn.executor.TrinoExecutorNode;
 import lombok.Data;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -19,7 +20,7 @@ import org.apache.log4j.LogManager;
 public class ApplicationNode {
 
     protected static final Log LOG = LogFactory.getLog(ApplicationNode.class);
-    private JobInfo jobInfo;
+    private static JobInfo jobInfo;
     private static Process exec = null;
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> RuntimeUtil.destroy(exec)));
@@ -29,7 +30,7 @@ public class ApplicationNode {
         try {
             ApplicationNode applicationNode = new ApplicationNode();
             applicationNode.init(args);
-
+            exec = new TrinoExecutorNode(jobInfo, jobInfo.getAmMemory()).run();
             LOG.info("ApplicationNode finish");
             System.exit(0);
         } catch (Throwable t) {

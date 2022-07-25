@@ -16,7 +16,6 @@ package com.trino.on.yarn.executor;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.StrPool;
-import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
@@ -78,13 +77,11 @@ public abstract class TrinoExecutor {
             exec = RuntimeUtil.exec("sh " + file.getAbsolutePath());
         }
 
-        ThreadUtil.execAsync(() -> {
-            try {
-                log(exec);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        try {
+            log(exec);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         return exec;
     }

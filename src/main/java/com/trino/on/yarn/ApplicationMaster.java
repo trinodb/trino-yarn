@@ -310,6 +310,7 @@ public class ApplicationMaster {
         jobInfo.setIpMaster(Server.ip());
         jobInfo.setPortMaster(simpleServer.getAddress().getPort());
         jobInfo.setPortTrino(NetUtil.getUsableLocalPort());
+        jobInfo.setAmMemory(amMemory);
 
         Map<String, String> envs = System.getenv();
 

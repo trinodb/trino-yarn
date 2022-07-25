@@ -33,6 +33,7 @@ public class JobInfo {
     private String user;
     private String runType;
     private int numTotalContainers;
+    private int amMemory;
 
     public String getPluginPath() {
         return path + "/plugin";

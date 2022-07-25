@@ -2,6 +2,7 @@ package com.trino.on.yarn.executor;
 
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.trino.on.yarn.constant.RunType;
@@ -17,7 +18,7 @@ public class TrinoExecutorMaster extends TrinoExecutor {
 
     @Override
     protected void log(Process exec) throws InterruptedException {
-        IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) line -> {
+        ThreadUtil.execAsync(() -> IoUtil.readUtf8Lines(exec.getInputStream(), (LineHandler) line -> {
             if (StrUtil.contains(line, "======== SERVER STARTED ========") ||
                     StrUtil.contains(line, "==========")) {
                 if (!endStart) {
@@ -29,7 +30,8 @@ public class TrinoExecutorMaster extends TrinoExecutor {
             if (jobInfo.isDebug()) {
                 HttpUtil.post(clientLogApi, line, 10000);
             }
-        });
+        }));
+
     }
 
     @Override
