@@ -806,7 +806,7 @@ public class ApplicationMaster {
             LOG.info("Setting up container launch container for containerId="
                     + container.getId());
             List<String> commands;
-            if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType()) && numTotalContainers == 1) {
+            if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType()) && jobInfo.getNumTotalContainers() == 1) {
                 commands = yarnPer();
             } else {
                 commands = yarnSession();

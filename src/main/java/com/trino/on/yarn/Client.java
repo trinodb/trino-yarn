@@ -287,31 +287,6 @@ public class Client {
             }
         }
 
-        if (!cliParser.hasOption("job_info")) {
-            throw new IllegalArgumentException("job_info isBlank");
-        }
-        String jobInfoPath = cliParser.getOptionValue("job_info");
-        String jobInfoStr = FileUtil.readUtf8String(jobInfoPath);
-
-        if (StrUtil.isNotBlank(jobInfoStr) && JSONUtil.isTypeJSONObject(jobInfoStr)) {
-            jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
-            if (jobInfo == null) {
-                throw new IllegalArgumentException("job_info");
-            }
-        } else
-            throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
-
-        LOG.warn("jobInfo:" + jobInfo);
-
-        if (StrUtil.isNotBlank(jobInfo.getUser())) {
-            System.setProperty("HADOOP_USER_NAME", jobInfo.getUser());
-        }
-
-        simpleServer = ClientServer.initClient();
-        InetSocketAddress inetSocketAddress = simpleServer.getAddress();
-        jobInfo.setPort(inetSocketAddress.getPort());
-        jobInfo.setIp(Server.ip());
-        jobInfo.setRunType(run);
         if (cliParser.hasOption("shell_args")) {
             shellArgs = cliParser.getOptionValues("shell_args");
         }
@@ -352,6 +327,33 @@ public class Client {
         clientTimeout = Integer.parseInt(cliParser.getOptionValue("timeout", "-1"));
 
         log4jPropFile = cliParser.getOptionValue("log_properties", "");
+
+        if (!cliParser.hasOption("job_info")) {
+            throw new IllegalArgumentException("job_info isBlank");
+        }
+        String jobInfoPath = cliParser.getOptionValue("job_info");
+        String jobInfoStr = FileUtil.readUtf8String(jobInfoPath);
+
+        if (StrUtil.isNotBlank(jobInfoStr) && JSONUtil.isTypeJSONObject(jobInfoStr)) {
+            jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
+            if (jobInfo == null) {
+                throw new IllegalArgumentException("job_info");
+            }
+        } else
+            throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
+
+        LOG.warn("jobInfo:" + jobInfo);
+
+        if (StrUtil.isNotBlank(jobInfo.getUser())) {
+            System.setProperty("HADOOP_USER_NAME", jobInfo.getUser());
+        }
+
+        simpleServer = ClientServer.initClient();
+        InetSocketAddress inetSocketAddress = simpleServer.getAddress();
+        jobInfo.setPort(inetSocketAddress.getPort());
+        jobInfo.setIp(Server.ip());
+        jobInfo.setRunType(run);
+        jobInfo.setNumTotalContainers(numContainers);
 
         return true;
     }

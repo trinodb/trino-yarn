@@ -41,6 +41,7 @@ public abstract class TrinoExecutor {
     protected String clientLogApi;
     protected boolean endStart = false;
     protected String path;
+    protected boolean coordinator = false;
 
     public TrinoExecutor(JobInfo jobInfo, int amMemory) {
         this.jobInfo = jobInfo;

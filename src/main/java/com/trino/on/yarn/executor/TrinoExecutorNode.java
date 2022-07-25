@@ -21,10 +21,8 @@ public class TrinoExecutorNode extends TrinoExecutor {
 
     @Override
     protected String trinoConfig() {
-        super.amMemory = amMemory / 2;
         int nodeMemory = amMemory / 3 * 2;
-        // TODO: 2022/7/22 config不通点在这里修改
-        return StrUtil.format(TRINO_CONFIG_CONTENT, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
+        return StrUtil.format(TRINO_CONFIG_CONTENT, super.coordinator, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
                 amMemory, nodeMemory, nodeMemory, NetUtil.getUsableLocalPort(), path);
     }
 }
