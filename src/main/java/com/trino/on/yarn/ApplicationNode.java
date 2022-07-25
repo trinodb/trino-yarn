@@ -19,19 +19,16 @@ import org.apache.log4j.LogManager;
 public class ApplicationNode {
 
     protected static final Log LOG = LogFactory.getLog(ApplicationNode.class);
+    private JobInfo jobInfo;
     private static Process exec = null;
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> RuntimeUtil.destroy(exec)));
     }
 
-    JobInfo jobInfo;
-
     public static void main(String[] args) {
-
         try {
             ApplicationNode applicationNode = new ApplicationNode();
             applicationNode.init(args);
-
 
             LOG.info("ApplicationNode finish");
             System.exit(0);

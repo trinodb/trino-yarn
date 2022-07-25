@@ -20,6 +20,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.constant.Constants;
+import com.trino.on.yarn.constant.RunType;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.ClientServer;
 import com.trino.on.yarn.server.Server;
@@ -280,12 +281,10 @@ public class Client {
             throw new IllegalArgumentException("run_type isBlank");
         } else {
             run = cliParser.getOptionValue("run_type");
-            if (run.equalsIgnoreCase("yarn-per")) {
-                // TODO:DUHANMIN 2022/7/18 后面加逻辑
-            } else if (run.equalsIgnoreCase("yarn-session")) {
-                // TODO:DUHANMIN 2022/7/18 后面加逻辑
-            } else
-                throw new IllegalArgumentException("run_type isBlank/run_type is yarn-per or yarn-session");
+            if (RunType.YARN_PER.getName().equalsIgnoreCase(run) || RunType.YARN_SESSION.getName().equalsIgnoreCase(run)) {
+            } else {
+                throw new IllegalArgumentException("run_type isBlank/run_type is yarn-per or yarn-session,run_type:" + run);
+            }
         }
 
         if (!cliParser.hasOption("job_info")) {

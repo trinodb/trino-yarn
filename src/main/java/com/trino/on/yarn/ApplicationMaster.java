@@ -22,6 +22,7 @@ import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.trino.on.yarn.constant.Constants;
+import com.trino.on.yarn.constant.RunType;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.executor.TrinoExecutorMaster;
 import com.trino.on.yarn.server.MasterServer;
@@ -804,7 +805,12 @@ public class ApplicationMaster {
         public void run() {
             LOG.info("Setting up container launch container for containerId="
                     + container.getId());
-            List<String> commands = yarnPer();
+            List<String> commands;
+            if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType()) && numTotalContainers == 1) {
+                commands = yarnPer();
+            } else {
+                commands = yarnSession();
+            }
             ContainerLaunchContext ctx = ContainerLaunchContext.newInstance(
                     localResources, shellEnv, commands, null, allTokens.duplicate(), null);
             runningContainers.putIfAbsent(container.getId(), container);
