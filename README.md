@@ -12,7 +12,7 @@ Trino-yarn Enables Trino to run on YARN
 * Yarn Master /node Built-in memory 128 MB (do not change this parameter)
 * The submission user can be displayed on YARN
 * Supports sending master logs to Client to facilitate debugging
-* Trino installation package supports remote directories, such as HDFS/S3
+* Trino data source supports remote directories, such as HDFS/S3
 * jdk11Home uses the environment variable JAVA11_HOME preference. if not, configure the jdk11Home parameter
 
 ### Yarn-per Submits task
@@ -76,19 +76,29 @@ catalog | trino directory
 user | submitted to the user
 debug | is set to true to master log to the Client
 
+catalog:
+
+parameters | instructions
+--- |---
+local | /mnt/dss/trino/catalog
+S3 | s3://bucket_name/tmp/catalog.zip
+HDFS | hdfs://tmp/linkis/hadoop/catalog.zip
+
+Note: Only the Local mode provides the directory, others require the ZIP format
+
 * Run the example
   ![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)
 
 ### logs
 
 ```shell
-sudo yarn logs -applicationId application_1642747413846_0462
+/usr/bin/yarn logs -applicationId application_1642747413846_0462
 ```
 
 ### stop
 
 ```shell
-sudo yarn application -kill application_1642747413846_0462
+/usr/bin/yarn application -kill application_1642747413846_0462
 ```
 
 ### appendix

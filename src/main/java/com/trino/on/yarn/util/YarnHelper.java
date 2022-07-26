@@ -13,12 +13,14 @@
  */
 package com.trino.on.yarn.util;
 
+import cn.hutool.core.util.StrUtil;
 import com.trino.on.yarn.constant.Constants;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileContext;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.hadoop.yarn.api.records.LocalResourceType;
@@ -35,6 +37,8 @@ import java.util.Map;
  * YarnHelper
  */
 public class YarnHelper {
+
+    private static final Log LOG = LogFactory.getLog(YarnHelper.class);
 
     public static String buildClassPathEnv(Configuration conf) {
         StringBuilder classPathEnv = new StringBuilder(ApplicationConstants.Environment.CLASSPATH.$$())
@@ -59,13 +63,7 @@ public class YarnHelper {
     }
 
     public static void addFrameworkToDistributedCache(String javaPathInHdfs, Map<String, LocalResource> localResources, Configuration conf) throws IOException {
-        URI uri;
-        try {
-            uri = new URI(javaPathInHdfs);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Unable to parse '" + javaPathInHdfs + "' as a URI.");
-        }
-
+        URI uri = getUri(javaPathInHdfs);
         Path path = new Path(uri.getScheme(), uri.getAuthority(), uri.getPath());
         FileSystem fs = path.getFileSystem(conf);
         Path frameworkPath = fs.makeQualified(new Path(uri.getScheme(), uri.getAuthority(), uri.getPath()));
@@ -85,5 +83,63 @@ public class YarnHelper {
                 LocalResourceType.ARCHIVE, LocalResourceVisibility.PRIVATE,
                 scFileStatus.getLen(), scFileStatus.getModificationTime());
         localResources.put(Constants.JAR_FILE_LINKEDNAME, scRsrc);
+    }
+
+    private static URI getUri(String javaPathInHdfs) {
+        URI uri;
+        try {
+            uri = new URI(javaPathInHdfs);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Unable to parse '" + javaPathInHdfs + "' as a URI.");
+        }
+        return uri;
+    }
+
+    public static Path addToLocalResources(Configuration conf, String path, String name, Map<String, LocalResource> localResources) throws IOException, URISyntaxException {
+        FileSystem fs;
+        if (StrUtil.startWith(path, "s3a://")) {
+            conf.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
+            fs = FileSystem.get(new URI(path), conf);
+        } else {
+            fs = FileSystem.get(conf);
+        }
+        return addToLocalResources(fs, path, name, localResources);
+    }
+
+    public static Path addToLocalResources(FileSystem fs, String path, String name, Map<String, LocalResource> localResources) throws IOException {
+        Path dst = fs.makeQualified(new Path(path));
+        FileStatus scFileStatus = fs.getFileStatus(dst);
+        LocalResource scRsrc = LocalResource.newInstance(
+                ConverterUtils.getYarnUrlFromURI(dst.toUri()),
+                LocalResourceType.ARCHIVE, LocalResourceVisibility.APPLICATION,
+                scFileStatus.getLen(), scFileStatus.getModificationTime());
+        localResources.put(name, scRsrc);
+        return dst;
+    }
+
+    public static Path addToLocalResources(String appName, FileSystem fs, String fileSrcPath,
+                                           String fileDstPath, String appId, Map<String, LocalResource> localResources,
+                                           String resources) throws IOException {
+        String suffix = appName + "/" + appId + "/" + fileDstPath;
+        Path dst = new Path(fs.getHomeDirectory(), suffix);
+        if (fileSrcPath == null) {
+            FSDataOutputStream ostream = null;
+            try {
+                ostream = FileSystem.create(fs, dst, new FsPermission((short) 0710));
+                ostream.writeUTF(resources);
+            } finally {
+                IOUtils.closeQuietly(ostream);
+            }
+        } else {
+            fs.copyFromLocalFile(new Path(fileSrcPath), dst);
+        }
+        FileStatus scFileStatus = fs.getFileStatus(dst);
+        LocalResource scRsrc =
+                LocalResource.newInstance(
+                        ConverterUtils.getYarnUrlFromURI(dst.toUri()),
+                        LocalResourceType.FILE, LocalResourceVisibility.APPLICATION,
+                        scFileStatus.getLen(), scFileStatus.getModificationTime());
+        localResources.put(fileDstPath, scRsrc);
+        return dst;
     }
 }

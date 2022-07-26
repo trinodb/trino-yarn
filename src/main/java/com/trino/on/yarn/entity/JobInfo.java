@@ -24,6 +24,7 @@ public class JobInfo {
     private String jdk11Home;
     private String sql;
     private String path;
+    private String catalog;
     private String ip;
     private int port;
     private String ipMaster;
@@ -48,10 +49,6 @@ public class JobInfo {
         return path + "/lib";
     }
 
-    public String getCatalog() {
-        return path + "/catalog";
-    }
-
     public String getProcname(String os) {
         return path + "/bin/procname/" + os + "/libprocname.so";
     }
@@ -61,6 +58,35 @@ public class JobInfo {
             return user;
         }
         return "hadoop";
+    }
+
+    public boolean isHdfsOrS3() {
+        if (StrUtil.startWith(catalog, "hdfs://")) {
+            return true;
+        } else if (StrUtil.startWith(catalog, "s3a://")) {
+            return true;
+        } else if (StrUtil.startWith(catalog, "s3://")) {
+            return true;
+        } else if (StrUtil.startWith(catalog, "s3n://")) {
+            return true;
+        }
+        return false;
+    }
+
+    public String getCatalogHdfs() {
+        String catalog = this.catalog;
+        if (StrUtil.startWith(catalog, "hdfs://")) {
+            catalog = StrUtil.replace(this.catalog, "hdfs://", "");
+            if (!StrUtil.startWith(catalog, "/")) {
+                catalog = "/" + catalog;
+            }
+        } else if (StrUtil.startWith(catalog, "s3a://")) {
+        } else if (StrUtil.startWith(catalog, "s3n://")) {
+            catalog = StrUtil.replace(this.catalog, "s3n://", "s3a://");
+        } else if (StrUtil.startWith(catalog, "s3://")) {
+            catalog = StrUtil.replace(this.catalog, "s3://", "s3a://");
+        }
+        return catalog;
     }
 
     public JSONObject toJson() {
