@@ -82,6 +82,8 @@ local | /mnt/dss/trino/catalog
 S3 | s3://bucket_name/tmp/catalog.zip
 HDFS | hdfs://tmp/linkis/hadoop/catalog.zip
 
+注意:只有local模式提供目录,其他需要zip格式
+
 * 运行示例
   ![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)
 
