@@ -15,7 +15,7 @@ Trino-yarn Enables Trino to run on YARN
 * Trino installation package supports remote directories, such as HDFS/S3
 * jdk11Home uses the environment variable JAVA11_HOME preference. if not, configure the jdk11Home parameter
 
-### SYarn-per Submits a task
+### Yarn-per Submits task
 
 ```shell
 /usr/bin/yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
