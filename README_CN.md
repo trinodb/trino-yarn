@@ -11,7 +11,7 @@ trino-yarn可以让trino在yarn上运行
 * yarn master/node内存内置128m(一般不需要修改)
 * 支持yarn上显示提交用户
 * 支持将master日志打到Client,方便debug
-* trino安装包支持远程目录,例如hdfs/s3等
+* trino数据源支持远程目录,例如hdfs/s3等
 * jdk11Home优先使用环境变量JAVA11_HOME,如果没有则使用配置jdk11Home参数
 
 ### yarn-per提交任务
@@ -73,6 +73,14 @@ path |trino安装路径
 catalog | trino目录
 user |提交用户
 debug |设置为true可将master日志打到Client
+
+catalog:
+
+参数 |说明
+--- |---
+local | /mnt/dss/trino/catalog
+S3 | s3://bucket_name/tmp/catalog.zip
+HDFS | hdfs://tmp/linkis/hadoop/catalog.zip
 
 * 运行示例
   ![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)

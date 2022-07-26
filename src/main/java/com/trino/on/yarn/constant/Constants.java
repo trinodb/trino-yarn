@@ -22,6 +22,8 @@ public class Constants {
 
     public static final String JAVA_OPTS_PATH = "javaOpts";
 
+    public static final String JAVA_TRINO_CATALOG_PATH = "catalog";
+
     public static final String JAR_FILE_LINKEDNAME = "jar";
 
     public static final String APP_MASTER_JAR_PATH = "AppMaster.jar";

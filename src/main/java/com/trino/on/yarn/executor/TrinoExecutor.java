@@ -122,7 +122,11 @@ public abstract class TrinoExecutor {
         putEnv(CONFIG, configEnv.getAbsolutePath());
         putEnv(LOG_OUTPUT_FILE, logPath);
         putEnv("log.enable-console=true");
-        String nodes = StrUtil.format(TRINO_NODE_CONTENT, StrUtil.uuid(), path, jobInfo.getCatalog(), jobInfo.getPluginPath());
+        String catalog = jobInfo.getCatalog();
+        if (jobInfo.isHdfsOrS3()) {
+            catalog = path + "/" + JAVA_TRINO_CATALOG_PATH + "/" + JAVA_TRINO_CATALOG_PATH;
+        }
+        String nodes = StrUtil.format(TRINO_NODE_CONTENT, StrUtil.uuid(), path, catalog, jobInfo.getPluginPath());
         for (String node : StrUtil.split(nodes, StrPool.LF)) {
             putEnv(node);
         }

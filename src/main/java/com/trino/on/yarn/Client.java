@@ -28,17 +28,13 @@ import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
 import com.trino.on.yarn.util.YarnHelper;
 import org.apache.commons.cli.*;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -51,7 +47,6 @@ import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.client.api.YarnClientApplication;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
-import org.apache.hadoop.yarn.util.ConverterUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -450,21 +445,29 @@ public class Client {
         // Copy the application master jar to the filesystem
         // Create a local resource to point to the destination jar path
         FileSystem fs = FileSystem.get(conf);
-        Path dst = addToLocalResources(fs, appMasterJar, Constants.APP_MASTER_JAR_PATH, appId.toString(), localResources, null);
+        Path dst = YarnHelper.addToLocalResources(appName, fs, appMasterJar, Constants.APP_MASTER_JAR_PATH, appId.toString(), localResources, null);
 
         YarnHelper.addFrameworkToDistributedCache(dst.toUri().toString(), localResources, conf);
 
         // Set the log4j properties if needed
         if (!log4jPropFile.isEmpty()) {
-            addToLocalResources(fs, log4jPropFile, Constants.LOG_4_J_PATH, appId.toString(), localResources, null);
+            YarnHelper.addToLocalResources(appName, fs, log4jPropFile, Constants.LOG_4_J_PATH, appId.toString(), localResources, null);
         }
 
         if (shellArgs.length > 0) {
-            addToLocalResources(fs, null, Constants.SHELL_ARGS_PATH, appId.toString(), localResources, ArrayUtil.join(shellArgs, " "));
+            YarnHelper.addToLocalResources(appName, fs, null, Constants.SHELL_ARGS_PATH, appId.toString(), localResources, ArrayUtil.join(shellArgs, " "));
         }
 
         if (javaOpts.length > 0) {
-            addToLocalResources(fs, null, Constants.JAVA_OPTS_PATH, appId.toString(), localResources, ArrayUtil.join(javaOpts, " "));
+            YarnHelper.addToLocalResources(appName, fs, null, Constants.JAVA_OPTS_PATH, appId.toString(), localResources, ArrayUtil.join(javaOpts, " "));
+        }
+
+        if (jobInfo.isHdfsOrS3()) {
+            try {
+                YarnHelper.addToLocalResources(conf, jobInfo.getCatalogHdfs(), Constants.JAVA_TRINO_CATALOG_PATH, localResources);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
         // Set the necessary security tokens as needed
@@ -690,40 +693,5 @@ public class Client {
         yarnClient.killApplication(appId);
     }
 
-    private Path addToLocalResources(FileSystem fs, String fileSrcPath,
-                                     String fileDstPath, String appId, Map<String, LocalResource> localResources,
-                                     String resources) throws IOException {
-        String suffix = appName + "/" + appId + "/" + fileDstPath;
-        Path dst = new Path(fs.getHomeDirectory(), suffix);
-        if (fileSrcPath == null) {
-            FSDataOutputStream ostream = null;
-            try {
-                ostream = FileSystem.create(fs, dst, new FsPermission((short) 0710));
-                ostream.writeUTF(resources);
-            } finally {
-                IOUtils.closeQuietly(ostream);
-            }
-        } else {
-            fs.copyFromLocalFile(new Path(fileSrcPath), dst);
-        }
-        FileStatus scFileStatus = fs.getFileStatus(dst);
-        LocalResource scRsrc =
-                LocalResource.newInstance(
-                        ConverterUtils.getYarnUrlFromURI(dst.toUri()),
-                        LocalResourceType.FILE, LocalResourceVisibility.APPLICATION,
-                        scFileStatus.getLen(), scFileStatus.getModificationTime());
-        localResources.put(fileDstPath, scRsrc);
-        return dst;
-    }
 
-    private Path addToLocalResources(FileSystem fs, String path, String name, Map<String, LocalResource> localResources) throws IOException {
-        Path dst = fs.makeQualified(new Path(path));
-        FileStatus scFileStatus = fs.getFileStatus(dst);
-        LocalResource scRsrc = LocalResource.newInstance(
-                ConverterUtils.getYarnUrlFromURI(dst.toUri()),
-                LocalResourceType.ARCHIVE, LocalResourceVisibility.APPLICATION,
-                scFileStatus.getLen(), scFileStatus.getModificationTime());
-        localResources.put(name, scRsrc);
-        return dst;
-    }
 }

@@ -849,6 +849,14 @@ public class ApplicationMaster {
                 Throwables.propagate(e);
             }
 
+            if (jobInfo.isHdfsOrS3()) {
+                try {
+                    YarnHelper.addToLocalResources(conf, jobInfo.getCatalogHdfs(), Constants.JAVA_TRINO_CATALOG_PATH, localResources);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
             // Set the necessary command to execute on the allocated container
             Vector<CharSequence> vargs = new Vector<CharSequence>(10);
 
