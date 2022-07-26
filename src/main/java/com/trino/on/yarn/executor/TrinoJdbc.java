@@ -1,6 +1,7 @@
 package com.trino.on.yarn.executor;
 
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,13 +26,26 @@ public class TrinoJdbc {
             connection = DriverManager.getConnection(StrUtil.format(JDBC_TRINO, ip, port), email, null);
             statement = connection.createStatement();
             for (String tmp : StrUtil.split(sql, ";")) {
-                statement.execute(tmp);
                 LOG.warn("execute sql:" + tmp);
+                execute(statement, tmp);
             }
         } finally {
             IoUtil.close(statement);
             IoUtil.close(connection);
         }
+    }
 
+    public static void execute(Statement statement, String sql) throws SQLException {
+        try {
+            statement.execute(sql);
+        } catch (SQLException e) {
+            String message = e.getMessage();
+            if (message.contains("initializing")) {
+                ThreadUtil.sleep(500);
+                execute(statement, sql);
+            } else {
+                throw e;
+            }
+        }
     }
 }

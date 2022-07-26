@@ -20,6 +20,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.constant.Constants;
+import com.trino.on.yarn.constant.RunType;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.ClientServer;
 import com.trino.on.yarn.server.Server;
@@ -280,38 +281,11 @@ public class Client {
             throw new IllegalArgumentException("run_type isBlank");
         } else {
             run = cliParser.getOptionValue("run_type");
-            if (run.equalsIgnoreCase("yarn-per")) {
-                // TODO:DUHANMIN 2022/7/18 后面加逻辑
-            } else if (run.equalsIgnoreCase("yarn-session")) {
-                // TODO:DUHANMIN 2022/7/18 后面加逻辑
-            } else
-                throw new IllegalArgumentException("run_type isBlank/run_type is yarn-per or yarn-session");
-        }
-
-        if (!cliParser.hasOption("job_info")) {
-            throw new IllegalArgumentException("job_info isBlank");
-        }
-        String jobInfoPath = cliParser.getOptionValue("job_info");
-        String jobInfoStr = FileUtil.readUtf8String(jobInfoPath);
-
-        if (StrUtil.isNotBlank(jobInfoStr) && JSONUtil.isTypeJSONObject(jobInfoStr)) {
-            jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
-            if (jobInfo == null) {
-                throw new IllegalArgumentException("job_info");
+            if (RunType.YARN_PER.getName().equalsIgnoreCase(run) || RunType.YARN_SESSION.getName().equalsIgnoreCase(run)) {
+            } else {
+                throw new IllegalArgumentException("run_type isBlank/run_type is yarn-per or yarn-session,run_type:" + run);
             }
-        } else
-            throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
-
-        LOG.warn("jobInfo:" + jobInfo);
-
-        if (StrUtil.isNotBlank(jobInfo.getUser())) {
-            System.setProperty("HADOOP_USER_NAME", jobInfo.getUser());
         }
-
-        simpleServer = ClientServer.initClient();
-        InetSocketAddress inetSocketAddress = simpleServer.getAddress();
-        jobInfo.setPort(inetSocketAddress.getPort());
-        jobInfo.setIp(Server.ip());
 
         if (cliParser.hasOption("shell_args")) {
             shellArgs = cliParser.getOptionValues("shell_args");
@@ -353,6 +327,33 @@ public class Client {
         clientTimeout = Integer.parseInt(cliParser.getOptionValue("timeout", "-1"));
 
         log4jPropFile = cliParser.getOptionValue("log_properties", "");
+
+        if (!cliParser.hasOption("job_info")) {
+            throw new IllegalArgumentException("job_info isBlank");
+        }
+        String jobInfoPath = cliParser.getOptionValue("job_info");
+        String jobInfoStr = FileUtil.readUtf8String(jobInfoPath);
+
+        if (StrUtil.isNotBlank(jobInfoStr) && JSONUtil.isTypeJSONObject(jobInfoStr)) {
+            jobInfo = JSONUtil.toBean(jobInfoStr, JobInfo.class);
+            if (jobInfo == null) {
+                throw new IllegalArgumentException("job_info");
+            }
+        } else
+            throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
+
+        LOG.warn("jobInfo:" + jobInfo);
+
+        if (StrUtil.isNotBlank(jobInfo.getUser())) {
+            System.setProperty("HADOOP_USER_NAME", jobInfo.getUser());
+        }
+
+        simpleServer = ClientServer.initClient();
+        InetSocketAddress inetSocketAddress = simpleServer.getAddress();
+        jobInfo.setPort(inetSocketAddress.getPort());
+        jobInfo.setIp(Server.ip());
+        jobInfo.setRunType(run);
+        jobInfo.setNumTotalContainers(numContainers);
 
         return true;
     }
@@ -522,7 +523,7 @@ public class Client {
         vargs.add("--num_containers " + numContainers);
         vargs.add("--priority " + shellCmdPriority);
         vargs.add("--master_memory " + this.amMemory);
-        vargs.add("-job_info " + Base64.encode(jobInfo.toString()));
+        vargs.add("--job_info " + Base64.encode(jobInfo.toString()));
 
         for (Map.Entry<String, String> entry : shellEnv.entrySet()) {
             vargs.add("--shell_env " + entry.getKey() + "=" + entry.getValue());
@@ -659,6 +660,7 @@ public class Client {
                 }
             } else if (YarnApplicationState.KILLED == state
                     || YarnApplicationState.FAILED == state) {
+
                 LOG.info("Application did not finish."
                         + " YarnState=" + state + ", DSFinalStatus=" + dsStatus.toString()
                         + ". Breaking monitoring loop");

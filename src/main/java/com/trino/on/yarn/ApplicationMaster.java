@@ -14,17 +14,21 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.trino.on.yarn.constant.Constants;
+import com.trino.on.yarn.constant.RunType;
 import com.trino.on.yarn.entity.JobInfo;
-import com.trino.on.yarn.executor.TrinoExecutor;
+import com.trino.on.yarn.executor.TrinoExecutorMaster;
 import com.trino.on.yarn.server.MasterServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
+import com.trino.on.yarn.util.YarnHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
@@ -151,18 +155,25 @@ public class ApplicationMaster {
 
     private static SimpleServer simpleServer = null;
 
+    private final String appNodeMainClass;
+
+    private static Process exec = null;
+
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> RuntimeUtil.destroy(exec)));
+    }
+
     public static void main(String[] args) {
         boolean result = false;
-        Process exec = null;
         try {
             ApplicationMaster appMaster = new ApplicationMaster();
             LOG.info("Initializing ApplicationMaster");
             boolean doRun = appMaster.init(args);
+            exec = new TrinoExecutorMaster(jobInfo, amMemory).run();
             if (!doRun) {
                 System.exit(0);
             }
             appMaster.run();
-            exec = new TrinoExecutor(jobInfo, simpleServer, amMemory).run();
             while (Server.MASTER_FINISH.equals(0)) {
                 Thread.sleep(500);
             }
@@ -221,6 +232,7 @@ public class ApplicationMaster {
     public ApplicationMaster() {
         // Set up the configuration
         conf = new YarnConfiguration();
+        appNodeMainClass = ApplicationNode.class.getName();
     }
 
     /**
@@ -295,6 +307,10 @@ public class ApplicationMaster {
         }
 
         simpleServer = MasterServer.initMaster();
+        jobInfo.setIpMaster(Server.ip());
+        jobInfo.setPortMaster(simpleServer.getAddress().getPort());
+        jobInfo.setPortTrino(NetUtil.getUsableLocalPort());
+        jobInfo.setAmMemory(amMemory);
 
         Map<String, String> envs = System.getenv();
 
@@ -360,7 +376,7 @@ public class ApplicationMaster {
             }
         }
 
-        containerMemory = Integer.parseInt(cliParser.getOptionValue("container_memory", "10"));
+        containerMemory = Integer.parseInt(cliParser.getOptionValue("container_memory", "128"));
         containerVirtualCores = Integer.parseInt(cliParser.getOptionValue("container_vcores", "1"));
         numTotalContainers = Integer.parseInt(cliParser.getOptionValue("num_containers", "1"));
         memoryOverhead = Integer.parseInt(cliParser.getOptionValue("memory_overhead", "1"));
@@ -499,6 +515,9 @@ public class ApplicationMaster {
     protected boolean finish() {
         // wait for completion.
         while (!done) {
+            if (Server.MASTER_FINISH.equals(2)) {
+                break;
+            }
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
@@ -546,6 +565,7 @@ public class ApplicationMaster {
         }
 
         amRMClient.stop();
+        RuntimeUtil.destroy(exec);
 
         return success;
     }
@@ -599,12 +619,12 @@ public class ApplicationMaster {
         @Override
         public void onContainerStatusReceived(ContainerId containerId,
                                               ContainerStatus containerStatus) {
-            LOG.debug("Container Status: id=" + containerId + ", status=" + containerStatus);
+            LOG.info("Container Status: id=" + containerId + ", status=" + containerStatus);
         }
 
         @Override
         public void onContainerStarted(ContainerId containerId, Map<String, ByteBuffer> allServiceResponse) {
-            LOG.debug("Succeeded to start Container " + containerId);
+            LOG.info("Succeeded to start Container " + containerId);
             Container container = containers.get(containerId);
             if (container != null) {
                 applicationMaster.nmClientAsync.getContainerStatusAsync(containerId, container.getNodeId());
@@ -734,6 +754,7 @@ public class ApplicationMaster {
         @Override
         public void onShutdownRequest() {
             done = true;
+            RuntimeUtil.destroy(exec);
         }
 
         @Override
@@ -750,6 +771,7 @@ public class ApplicationMaster {
         @Override
         public void onError(Throwable e) {
             done = true;
+            RuntimeUtil.destroy(exec);
             amRMClient.stop();
         }
     }
@@ -765,6 +787,9 @@ public class ApplicationMaster {
 
         NMCallbackHandler containerListener;
 
+        // Set the local resources
+        Map<String, LocalResource> localResources = new HashMap<>(4);
+
         /**
          * @param lcontainer        Allocated container
          * @param containerListener Callback handler of the container
@@ -775,8 +800,6 @@ public class ApplicationMaster {
             this.containerListener = containerListener;
         }
 
-        // TODO: 2022/7/18 这里启动Node节点
-
         /**
          * Connects to CM, sets up container launch context
          * for shell command and eventually dispatches the container
@@ -784,17 +807,83 @@ public class ApplicationMaster {
          */
         @Override
         public void run() {
-            LOG.info("Setting up container launch container for containerId=" + container.getId());
-
-            String command = System.getenv("JAVA_HOME") + "/bin/java -version";
-            List<String> commands = new ArrayList<>();
-            commands.add(command);
-
+            LOG.info("Setting up container launch container for containerId="
+                    + container.getId());
+            List<String> commands;
+            if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType()) && jobInfo.getNumTotalContainers() == 1) {
+                commands = yarnPer();
+            } else {
+                commands = yarnSession();
+            }
             ContainerLaunchContext ctx = ContainerLaunchContext.newInstance(
-                    null, shellEnv, commands, null, allTokens.duplicate(), null);
+                    localResources, shellEnv, commands, null, allTokens.duplicate(), null);
             runningContainers.putIfAbsent(container.getId(), container);
             containerListener.addContainer(container.getId(), container);
             nmClientAsync.startContainerAsync(container, ctx);
+        }
+
+        private List<String> yarnPer() {
+            String command = System.getenv("JAVA_HOME") + "/bin/java -version";
+            List<String> commands = new ArrayList<>();
+            commands.add(command);
+            return commands;
+        }
+
+        private List<String> yarnSession() {
+            Map<String, String> currentEnvs = System.getenv();
+            if (!currentEnvs.containsKey(Constants.JAR_FILE_PATH)) {
+                throw new RuntimeException(Constants.JAR_FILE_PATH
+                        + " not set in the environment.");
+            }
+            String frameworkPath = currentEnvs.get(Constants.JAR_FILE_PATH);
+
+            shellEnv.put("CLASSPATH", YarnHelper.buildClassPathEnv(conf));
+
+            try {
+                YarnHelper.addFrameworkToDistributedCache(frameworkPath, localResources, conf);
+            } catch (IOException e) {
+                Throwables.propagate(e);
+            }
+
+            // Set the necessary command to execute on the allocated container
+            Vector<CharSequence> vargs = new Vector<CharSequence>(10);
+
+            // Set java executable command
+            vargs.add(ApplicationConstants.Environment.JAVA_HOME.$$() + "/bin/java");
+            // Set am memory size
+            vargs.add("-Xms" + containerMemory + "m");
+            vargs.add("-Xmx" + containerMemory + "m");
+            vargs.add(javaOpts);
+
+            // Set tmp dir
+            vargs.add("-Djava.io.tmpdir=$PWD/tmp");
+
+            // Set log4j configuration file
+            // vargs.add("-Dlog4j.configuration=" + Constants.NESTO_YARN_APPCONTAINER_LOG4J);
+
+            // Set class name
+            vargs.add(appNodeMainClass);
+
+            // Set args for the shell command if any
+            vargs.add(shellArgs);
+            // Add log redirect params
+
+            vargs.add("--job_info " + Base64.encode(jobInfo.toString()));
+
+            vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout");
+            vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");
+
+            // Get final command
+            StringBuilder command = new StringBuilder();
+            for (CharSequence str : vargs) {
+                command.append(str).append(" ");
+            }
+
+            LOG.info("Shell command is: \n" + command);
+
+            List<String> commands = new ArrayList<>();
+            commands.add(command.toString());
+            return commands;
         }
     }
 

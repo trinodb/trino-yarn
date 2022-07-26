@@ -103,7 +103,6 @@ public class Constants {
      * node-scheduler.include-coordinator=true
      * discovery.uri=http://ip-*-*-*-*.vpc.internal:8889
      * http-server.threads.max=500
-     * discovery-server.enabled=true
      * sink.max-buffer-size=1GB
      * query.max-memory=22938MB \\单个查询在集群的最大内存
      * query.max-memory-per-node=26401163969B \\单个查询在单个节点上的最大用户内存
@@ -128,10 +127,9 @@ public class Constants {
      * exchange.http-client.max-connections-per-server=5120
      */
     public static final String TRINO_CONFIG_CONTENT = "coordinator=true\n" +
-            "node-scheduler.include-coordinator=true\n" +
+            "node-scheduler.include-coordinator={}\n" +
             "discovery.uri=http://{}:{}\n" +
             "http-server.threads.max=500\n" +
-            "discovery-server.enabled=true\n" +
             "sink.max-buffer-size=1GB\n" +
             "query.max-memory={}MB\n" +
             "query.max-memory-per-node={}MB\n" +
@@ -146,7 +144,7 @@ public class Constants {
             "http-server.log.max-size=67108864B\n" +
             "http-server.log.max-history=5\n" +
             "log.max-size=268435456B\n" +
-            "log.max-history=5";
+            "log.max-history=5\n";
 
     public static final String LOG_OUTPUT_FILE = "log.output-file";
 
