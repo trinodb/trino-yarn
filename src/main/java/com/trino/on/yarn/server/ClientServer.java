@@ -50,7 +50,8 @@ public class ClientServer extends Server {
                             ThreadUtil.sleep(2000);
                         }
                     }
-                    //再关闭Master
+                    // TODO: 2022/7/26 后面再优化(一定要等待node关闭,再关闭Master)
+                    ThreadUtil.sleep(2000);
                     String masterEnd = formatUrl(MASTER_END, jobInfo.getIpMaster(), jobInfo.getPortMaster());
                     HttpUtil.post(masterEnd, start.toString());
                 }

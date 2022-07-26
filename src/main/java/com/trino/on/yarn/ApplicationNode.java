@@ -1,6 +1,7 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.thread.GlobalThreadPool;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -26,7 +27,10 @@ public class ApplicationNode {
     private static JobInfo jobInfo;
     private static Process exec = null;
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> RuntimeUtil.destroy(exec)));
+        RuntimeUtil.addShutdownHook(new Thread(() -> {
+            RuntimeUtil.destroy(exec);
+            GlobalThreadPool.shutdown(true);
+        }));
     }
 
     public static void main(String[] args) {
