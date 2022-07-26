@@ -61,7 +61,7 @@ Example:
   "path": "/mnt/dss/trino",
   "catalog": "/mnt/dss/trino/catalog",
   "user": "hanmin.du",
-  "debug": true
+  "debug": false
 }
 ```
 

@@ -59,7 +59,7 @@ yarn单次执行(yarn-per)和yarn常驻进程(yarn-session)
   "path": "/mnt/dss/trino",
   "catalog": "/mnt/dss/trino/catalog",
   "user": "hanmin.du",
-  "debug": true
+  "debug": false
 }
 ```
 
