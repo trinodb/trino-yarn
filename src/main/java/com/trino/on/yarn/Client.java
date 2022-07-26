@@ -14,6 +14,7 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
@@ -434,6 +435,7 @@ public class Client {
         // set the application name
         ApplicationSubmissionContext appContext = app.getApplicationSubmissionContext();
         appContext.setApplicationType("trino");
+        appContext.setApplicationTags(CollUtil.newHashSet("trino"));
         ApplicationId appId = appContext.getApplicationId();
 
         appContext.setKeepContainersAcrossApplicationAttempts(keepContainers);
@@ -451,11 +453,6 @@ public class Client {
         Path dst = addToLocalResources(fs, appMasterJar, Constants.APP_MASTER_JAR_PATH, appId.toString(), localResources, null);
 
         YarnHelper.addFrameworkToDistributedCache(dst.toUri().toString(), localResources, conf);
-        /*
-         * if (null != dataxJob){ addToLocalResources(fs, dataxJob, Constants.DATAX_JOB, appId.toString(), localResources, null); }
-         *
-         * if (null != dataxHomeArchivePath) { addToLocalResources(fs, dataxHomeArchivePath, Constants.DATAX,localResources); }
-         */
 
         // Set the log4j properties if needed
         if (!log4jPropFile.isEmpty()) {
