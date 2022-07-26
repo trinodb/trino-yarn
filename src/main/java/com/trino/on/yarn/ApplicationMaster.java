@@ -15,6 +15,7 @@ package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.net.NetUtil;
+import cn.hutool.core.thread.GlobalThreadPool;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -160,7 +161,10 @@ public class ApplicationMaster {
     private static Process exec = null;
 
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> RuntimeUtil.destroy(exec)));
+        RuntimeUtil.addShutdownHook(new Thread(() -> {
+            RuntimeUtil.destroy(exec);
+            GlobalThreadPool.shutdown(true);
+        }));
     }
 
     public static void main(String[] args) {
@@ -515,9 +519,9 @@ public class ApplicationMaster {
     protected boolean finish() {
         // wait for completion.
         while (!done) {
-            if (Server.MASTER_FINISH.equals(2)) {
+/*            if (Server.MASTER_FINISH.equals(2)) {
                 break;
-            }
+            }*/
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
