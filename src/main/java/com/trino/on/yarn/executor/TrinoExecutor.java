@@ -107,7 +107,12 @@ public abstract class TrinoExecutor {
         File configEnv = FileUtil.writeUtf8String(config, conf + TRINO_CONFIG);
 
         //写入运行参数
-        put(jobInfo.getJdk11Home() + "/bin/java");
+        String java11Home = System.getenv("JAVA11_HOME");
+        if (StrUtil.isBlank(java11Home)) {
+            java11Home = jobInfo.getJdk11Home();
+        }
+
+        put(java11Home + "/bin/java");
         put("-cp");
         if (!StrUtil.endWith(jobInfo.getLibPath(), "*")) {
             put(".:" + jobInfo.getLibPath() + "/*");
