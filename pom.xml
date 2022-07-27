@@ -3,11 +3,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <modules>
+        <module>trino-on-yarn</module>
+        <module>trino-yarn-driver</module>
+    </modules>
+
+
     <groupId>com.on.yarn</groupId>
-    <artifactId>trino-on-yarn</artifactId>
+    <artifactId>trino-yarn</artifactId>
     <version>1.0.0</version>
-    <packaging>jar</packaging>
-    <name>trino-on-yarn</name>
+    <packaging>pom</packaging>
+    <name>trino-yarn</name>
 
     <properties>
         <encoding>UTF-8</encoding>
@@ -24,126 +30,158 @@
         <trino.version>363</trino.version>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-            <version>${hadoop.version}</version>
-            <scope>provided</scope>
-        </dependency>
 
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <scope>provided</scope>
-        </dependency>
+    <dependencyManagement>
 
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-core</artifactId>
-            <version>${hutool.version}</version>
-            <scope>compile</scope>
-        </dependency>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-client</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
 
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-http</artifactId>
-            <version>${hutool.version}</version>
-            <scope>compile</scope>
-        </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
 
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-json</artifactId>
-            <version>${hutool.version}</version>
-            <scope>compile</scope>
-        </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-core</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
 
-        <dependency>
-            <groupId>io.trino</groupId>
-            <artifactId>trino-jdbc</artifactId>
-            <version>${trino.version}</version>
-            <scope>compile</scope>
-        </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-http</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-json</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
 
+            <dependency>
+                <groupId>io.trino</groupId>
+                <artifactId>trino-jdbc</artifactId>
+                <version>${trino.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <artifactSet>
-                                <excludes></excludes>
-                            </artifactSet>
-                            <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                                    <resource>META-INF/spring.handlers</resource>
-                                </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                                    <resource>META-INF/spring.schemas</resource>
-                                </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                                    <resource>META-INF/spring.tooling</resource>
-                                </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                            </transformers>
-
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>com.diffplug.spotless</groupId>
-                <artifactId>spotless-maven-plugin</artifactId>
-                <version>2.22.1</version>
-                <configuration>
-                    <java>
-                        <eclipse>
-                            <file>
-                                ${maven.multiModuleProjectDirectory}/src/main/resources/shardingsphere_eclipse_formatter.xml
-                            </file>
-                        </eclipse>
-                        <licenseHeader>
-                            <file>${maven.multiModuleProjectDirectory}/src/main/resources/license-header</file>
-                        </licenseHeader>
-                    </java>
-                </configuration>
-            </plugin>
-        </plugins>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>false</filtering>
-            </resource>
-        </resources>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <source>${maven.compiler.source}</source>
+                        <target>${maven.compiler.target}</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.rat</groupId>
+                    <artifactId>apache-rat-plugin</artifactId>
+                    <version>${maven-apache-rat.version}</version>
+                    <configuration>
+                        <!-- Exclude files/folders for apache release -->
+                        <excludes>
+                            <!-- Git specific files -->
+                            <exclude>.git/</exclude>
+                            <exclude>.gitignore</exclude>
+                            <!-- IDE specific files-->
+                            <exclude>**/.idea/</exclude>
+                            <exclude>**/.scalastyle/</exclude>
+                            <exclude>**/*.iml</exclude>
+                            <exclude>**/.classpath</exclude>
+                            <exclude>**/.settings/**</exclude>
+                            <exclude>**/.project</exclude>
+                            <!-- Maven working directory -->
+                            <exclude>**/target/**</exclude>
+                            <!-- Patch files which can be lying around -->
+                            <exclude>**/*.patch</exclude>
+                            <exclude>**/*.rej</exclude>
+                            <!-- README and test data with exact format -->
+                            <exclude>README*</exclude>
+                            <exclude>DEPENDENCIES</exclude>
+                            <exclude>**/licenses/*</exclude>
+                            <exclude>**/*.log</exclude>
+                            <exclude>**/*.out</exclude>
+                            <exclude>**/*.db</exclude>
+                            <exclude>**/velocity.log*</exclude>
+                            <exclude>**/*.json</exclude>
+                            <exclude>**/*.avro</exclude>
+                            <exclude>**/*.dat</exclude>
+                            <exclude>**/banner.txt</exclude>
+                            <exclude>**/bower_components/**</exclude>
+                            <exclude>**/node_modules/**</exclude>
+                            <exclude>**/.tmp/**</exclude>
+                            <exclude>**/angular/src/assets/.gitkeep</exclude>
+                            <exclude>**/angular/.editorconfig</exclude>
+                            <exclude>**/dist/**</exclude>
+                            <exclude>**/.bowerrc</exclude>
+                            <exclude>**/src/main/resources/public/**</exclude>
+                            <exclude>**/pom.xml.releaseBackup</exclude>
+                            <exclude>**/pom.xml.tag</exclude>
+                        </excludes>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>rat-check</id>
+                            <phase>validate</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.2.4</version>
+                    <configuration>
+                        <createDependencyReducedPom>false</createDependencyReducedPom>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                            <configuration>
+                                <transformers>
+                                    <transformer
+                                            implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                        <!--<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                            <mainclass></mainclass>
+                                        </transformer>-->
+                                    </transformer>
+                                </transformers>
+                                <filters>
+                                    <filter>
+                                        <artifact>*:*</artifact>
+                                        <excludes>
+                                            <exclude>META-INF/*.SF</exclude>
+                                            <exclude>META-INF/*.DSA</exclude>
+                                            <exclude>META-INF/*.RSA</exclude>
+                                        </excludes>
+                                    </filter>
+                                </filters>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 </project>
