@@ -18,6 +18,14 @@ package com.trino.on.yarn.constant;
  */
 public class Constants {
 
+    public static final String HDFS = "hdfs://";
+
+    public static final String S_3_A = "s3a://";
+
+    public static final String S_3_N = "s3n://";
+
+    public static final String S_3 = "s3://";
+
     public static final String SHELL_ARGS_PATH = "shellArgs";
 
     public static final String JAVA_OPTS_PATH = "javaOpts";

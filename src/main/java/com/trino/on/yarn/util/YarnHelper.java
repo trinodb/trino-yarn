@@ -33,6 +33,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
+import static com.trino.on.yarn.constant.Constants.S_3_A;
+
 /**
  * YarnHelper
  */
@@ -97,7 +99,7 @@ public class YarnHelper {
 
     public static Path addToLocalResources(Configuration conf, String path, String name, Map<String, LocalResource> localResources) throws IOException, URISyntaxException {
         FileSystem fs;
-        if (StrUtil.startWith(path, "s3a://")) {
+        if (StrUtil.startWith(path, S_3_A)) {
             conf.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
             fs = FileSystem.get(new URI(path), conf);
         } else {

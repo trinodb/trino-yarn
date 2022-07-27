@@ -18,6 +18,8 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import lombok.Data;
 
+import static com.trino.on.yarn.constant.Constants.*;
+
 @Data
 public class JobInfo {
 
@@ -61,13 +63,13 @@ public class JobInfo {
     }
 
     public boolean isHdfsOrS3() {
-        if (StrUtil.startWith(catalog, "hdfs://")) {
+        if (StrUtil.startWith(catalog, HDFS)) {
             return true;
-        } else if (StrUtil.startWith(catalog, "s3a://")) {
+        } else if (StrUtil.startWith(catalog, S_3_A)) {
             return true;
-        } else if (StrUtil.startWith(catalog, "s3://")) {
+        } else if (StrUtil.startWith(catalog, S_3)) {
             return true;
-        } else if (StrUtil.startWith(catalog, "s3n://")) {
+        } else if (StrUtil.startWith(catalog, S_3_N)) {
             return true;
         }
         return false;
@@ -75,16 +77,16 @@ public class JobInfo {
 
     public String getCatalogHdfs() {
         String catalog = this.catalog;
-        if (StrUtil.startWith(catalog, "hdfs://")) {
-            catalog = StrUtil.replace(this.catalog, "hdfs://", "");
+        if (StrUtil.startWith(catalog, HDFS)) {
+            catalog = StrUtil.replace(this.catalog, HDFS, "");
             if (!StrUtil.startWith(catalog, "/")) {
                 catalog = "/" + catalog;
             }
-        } else if (StrUtil.startWith(catalog, "s3a://")) {
-        } else if (StrUtil.startWith(catalog, "s3n://")) {
-            catalog = StrUtil.replace(this.catalog, "s3n://", "s3a://");
-        } else if (StrUtil.startWith(catalog, "s3://")) {
-            catalog = StrUtil.replace(this.catalog, "s3://", "s3a://");
+        } else if (StrUtil.startWith(catalog, S_3_A)) {
+        } else if (StrUtil.startWith(catalog, S_3_N)) {
+            catalog = StrUtil.replace(this.catalog, S_3_N, S_3_A);
+        } else if (StrUtil.startWith(catalog, S_3)) {
+            catalog = StrUtil.replace(this.catalog, S_3, S_3_A);
         }
         return catalog;
     }
