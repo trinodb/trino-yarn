@@ -430,7 +430,14 @@ public class Client {
 
         // set the application name
         ApplicationSubmissionContext appContext = app.getApplicationSubmissionContext();
-        appContext.setApplicationType("trino");
+        if (jobInfo.getRunType().equalsIgnoreCase(RunType.YARN_PER.getName())) {
+            appContext.setApplicationType("trino-per-job");
+        } else if (jobInfo.getRunType().equalsIgnoreCase(RunType.YARN_SESSION.getName())) {
+            appContext.setApplicationType("trino-session");
+        } else {
+            appContext.setApplicationType("trino");
+        }
+
         appContext.setApplicationTags(CollUtil.newHashSet("trino"));
         ApplicationId appId = appContext.getApplicationId();
 
