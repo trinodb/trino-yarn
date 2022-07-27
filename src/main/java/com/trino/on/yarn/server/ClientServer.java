@@ -54,6 +54,8 @@ public class ClientServer extends Server {
                     ThreadUtil.sleep(2000);
                     String masterEnd = formatUrl(MASTER_END, jobInfo.getIpMaster(), jobInfo.getPortMaster());
                     HttpUtil.post(masterEnd, start.toString());
+
+                    FINISH = start.getInt("start");
                 }
             } else {
                 throw new IOException("master run false");

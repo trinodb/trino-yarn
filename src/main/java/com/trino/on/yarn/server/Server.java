@@ -32,6 +32,7 @@ public class Server {
     public static final String CLIENT_LOG = "/client/log";
     public static final String MASTER_END = "/master/end";
     public static final String NODE_END = "/node/end";
+    public static Integer FINISH = 0;//0,等待;1,正常结束;其他,异常结束
     public static Integer MASTER_FINISH = 0;//0,等待;1,正常结束;其他,异常结束
     public static Integer NODE_FINISH = 0;//0,等待;1,正常结束;其他,异常结束
     private static final String HTTP = "http://{}:{}";

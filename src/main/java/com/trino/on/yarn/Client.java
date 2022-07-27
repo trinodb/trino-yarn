@@ -121,7 +121,7 @@ public class Client {
 
     private SimpleServer simpleServer;
 
-    private String applicationId;
+    private ApplicationId applicationId;
     /*
      * private String dataxJob = "";
      *
@@ -606,8 +606,8 @@ public class Client {
         // app submission failure?
 
         // Monitor the application
-        applicationId = appId.toString();
-        LOG.warn("ApplicationId:" + applicationId);
+        applicationId = appId;
+        LOG.warn("ApplicationId:" + appId.toString());
         return monitorApplication(appId);
 
     }
@@ -669,6 +669,10 @@ public class Client {
                 forceKillApplication(appId);
                 return false;
             }
+
+            if (Server.FINISH.equals(2)) {
+                forceKillApplication(appId);
+            }
         }
 
     }
@@ -689,6 +693,4 @@ public class Client {
         // throws an exception in case of failures
         yarnClient.killApplication(appId);
     }
-
-
 }

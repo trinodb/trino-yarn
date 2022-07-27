@@ -14,6 +14,7 @@ public class MasterServer extends Server {
     public static SimpleServer initMaster() {
         SimpleServer server = HttpUtil.createServer(0);
         server.addAction(MASTER_END, (request, response) -> {
+            LOG.warn("master end:" + request.getBody());
             MASTER_FINISH = JSONUtil.parseObj(request.getBody()).getInt("start", 0);
             responseWriteSuccess(response);
         }).start();

@@ -14,6 +14,7 @@ public class NodeServer extends Server {
     public static SimpleServer initNode() {
         SimpleServer server = HttpUtil.createServer(0);
         server.addAction(NODE_END, (request, response) -> {
+            LOG.warn("node end:" + request.getBody());
             NODE_FINISH = JSONUtil.parseObj(request.getBody()).getInt("start", 0);
             responseWriteSuccess(response);
         }).start();

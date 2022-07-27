@@ -519,9 +519,9 @@ public class ApplicationMaster {
     protected boolean finish() {
         // wait for completion.
         while (!done) {
-/*            if (Server.MASTER_FINISH.equals(2)) {
+            if (Server.MASTER_FINISH.equals(2)) {
                 break;
-            }*/
+            }
             ThreadUtil.sleep(1000);
         }
 
