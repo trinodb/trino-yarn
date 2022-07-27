@@ -16,6 +16,7 @@ package com.trino.on.yarn;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -624,11 +625,7 @@ public class Client {
 
         while (true) {
             // Check app status every 5 second.
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                LOG.debug("Thread sleep in monitoring loop interrupted");
-            }
+            ThreadUtil.sleep(5000);
 
             // Get application report for the appId we are interested in
             ApplicationReport report = yarnClient.getApplicationReport(appId);
