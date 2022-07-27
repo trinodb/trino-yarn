@@ -89,6 +89,23 @@ Note: Only the Local mode provides the directory, others require the ZIP format
 * Run the example
   ![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)
 
+### Yarn-session Submits task
+
+```shell
+/usr/bin/yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
+  -jar_path /mnt/dss/trino-on-yarn-1.0.0.jar \
+  -run_type yarn-session \
+  -appname DemoApp \
+  -master_memory 1024 \
+  -num_containers 2 \
+  -queue default \
+  -job_info  /mnt/dss/trino/testJob.json
+```
+
+The IP address and port of the Trino Master can be found in the log
+
+![image](https://user-images.githubusercontent.com/28647031/181228150-fa9cd89d-d022-4b12-b217-49827dd5a1e7.png)
+
 ### logs
 
 ```shell
