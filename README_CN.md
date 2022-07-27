@@ -87,6 +87,24 @@ HDFS | hdfs://tmp/linkis/hadoop/catalog.zip
 * 运行示例
   ![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)
 
+### yarn-session提交任务
+
+```shell
+/usr/bin/yarn jar /mnt/dss/trino-on-yarn-1.0.0.jar com.trino.on.yarn.Client \
+  -jar_path /mnt/dss/trino-on-yarn-1.0.0.jar \
+  -run_type yarn-session \
+  -appname DemoApp \
+  -master_memory 1024 \
+  -num_containers 2 \
+  -queue default \
+  -job_info  /mnt/dss/trino/testJob.json
+```
+
+可以从日志中找到trino Master的ip和端口
+
+![image](https://user-images.githubusercontent.com/28647031/181228150-fa9cd89d-d022-4b12-b217-49827dd5a1e7.png)
+
+
 ### 日志
 
 ```shell
