@@ -27,6 +27,7 @@ public class ApplicationNode {
     protected static final Log LOG = LogFactory.getLog(ApplicationNode.class);
     private static JobInfo jobInfo;
     private static Process exec = null;
+
     static {
         RuntimeUtil.addShutdownHook(new Thread(() -> {
             RuntimeUtil.destroy(exec);

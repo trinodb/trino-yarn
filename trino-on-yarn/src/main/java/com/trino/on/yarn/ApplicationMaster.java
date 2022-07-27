@@ -75,92 +75,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 @InterfaceStability.Unstable
 public class ApplicationMaster {
 
-    private static final Log LOG = LogFactory.getLog(ApplicationMaster.class);
-
-    // Configuration
-    private Configuration conf;
-
-    // Handle to communicate with the Resource Manager
-    @SuppressWarnings("rawtypes")
-    private AMRMClientAsync amRMClient;
-
-    // In both secure and non-secure modes, this points to the job-submitter.
-    private UserGroupInformation appSubmitterUgi;
-
-    // Handle to communicate with the Node Manager
-    private NMClientAsync nmClientAsync;
-    // Listen to process the response from the Node Manager
-    private NMCallbackHandler containerListener;
-
-    // Application Attempt Id ( combination of attemptId and fail count )
-    @VisibleForTesting
-    protected ApplicationAttemptId appAttemptID;
-
-    // For status update for clients - yet to be implemented
-    // Hostname of the container
-    private String appMasterHostname = "";
-    // Port on which the app master listens for status updates from clients
-    private int appMasterRpcPort = -1;
-    // Tracking url to which app master publishes info for clients to monitor
-    private String appMasterTrackingUrl = "";
-
-    // App Master configuration
-    // No. of containers to run shell command on
-    @VisibleForTesting
-    protected int numTotalContainers = 1;
-    // Memory to request for the container on which the shell command will run
-    private int containerMemory = 10;
-    // VirtualCores to request for the container on which the shell command will run
-    private int containerVirtualCores = 1;
-    // Priority of the request
-    private int requestPriority;
-
-    // Counter for completed containers ( complete denotes successful or failed )
-    private AtomicInteger numCompletedContainers = new AtomicInteger();
-    // Allocated container count so that we know how many containers has the RM
-    // allocated to us
-    @VisibleForTesting
-    protected AtomicInteger numAllocatedContainers = new AtomicInteger();
-    // Count of failed containers
-    private AtomicInteger numFailedContainers = new AtomicInteger();
-    // Count of containers already requested from the RM
-    // Needed as once requested, we should not request for containers again.
-    // Only request for more if the original requirement changes.
-    @VisibleForTesting
-    protected AtomicInteger numRequestedContainers = new AtomicInteger();
-
-    // Args to be passed to the shell command
-    private String shellArgs = "";
-
-    private String javaOpts = "";
-
-    // Env variables to be setup for the shell command
-    private Map<String, String> shellEnv = new HashMap<>();
-
-    private volatile boolean done;
-
-    private ByteBuffer allTokens;
-
-    // Launch threads
-    private List<Thread> launchThreads = new ArrayList<>();
-
-    private ConcurrentHashMap<ContainerId, Container> runningContainers = new ConcurrentHashMap<>();
-
-    // private YarnAppMasterHttpServer httpServer;
-
     public static final int DEFAULT_APP_MASTER_TRACKING_URL_PORT = 8090;
-
-    // Container memory overhead in MB
-    private int memoryOverhead = 10;
-
+    private static final Log LOG = LogFactory.getLog(ApplicationMaster.class);
     private static int amMemory = 128;
-
     private static JobInfo jobInfo = null;
-
     private static SimpleServer simpleServer = null;
-
-    private final String appNodeMainClass;
-
     private static Process exec = null;
 
     static {
@@ -168,6 +87,72 @@ public class ApplicationMaster {
             RuntimeUtil.destroy(exec);
             GlobalThreadPool.shutdown(true);
         }));
+    }
+
+    private final String appNodeMainClass;
+    // Application Attempt Id ( combination of attemptId and fail count )
+    @VisibleForTesting
+    protected ApplicationAttemptId appAttemptID;
+    // App Master configuration
+    // No. of containers to run shell command on
+    @VisibleForTesting
+    protected int numTotalContainers = 1;
+    // Allocated container count so that we know how many containers has the RM
+    // allocated to us
+    @VisibleForTesting
+    protected AtomicInteger numAllocatedContainers = new AtomicInteger();
+    // Count of containers already requested from the RM
+    // Needed as once requested, we should not request for containers again.
+    // Only request for more if the original requirement changes.
+    @VisibleForTesting
+    protected AtomicInteger numRequestedContainers = new AtomicInteger();
+    // Configuration
+    private Configuration conf;
+    // Handle to communicate with the Resource Manager
+    @SuppressWarnings("rawtypes")
+    private AMRMClientAsync amRMClient;
+    // In both secure and non-secure modes, this points to the job-submitter.
+    private UserGroupInformation appSubmitterUgi;
+    // Handle to communicate with the Node Manager
+    private NMClientAsync nmClientAsync;
+    // Listen to process the response from the Node Manager
+    private NMCallbackHandler containerListener;
+    // For status update for clients - yet to be implemented
+    // Hostname of the container
+    private String appMasterHostname = "";
+    // Port on which the app master listens for status updates from clients
+    private int appMasterRpcPort = -1;
+    // Tracking url to which app master publishes info for clients to monitor
+    private String appMasterTrackingUrl = "";
+    // Memory to request for the container on which the shell command will run
+    private int containerMemory = 10;
+    // VirtualCores to request for the container on which the shell command will run
+    private int containerVirtualCores = 1;
+    // Priority of the request
+    private int requestPriority;
+    // Counter for completed containers ( complete denotes successful or failed )
+    private AtomicInteger numCompletedContainers = new AtomicInteger();
+    // Count of failed containers
+    private AtomicInteger numFailedContainers = new AtomicInteger();
+
+    // private YarnAppMasterHttpServer httpServer;
+    // Args to be passed to the shell command
+    private String shellArgs = "";
+    private String javaOpts = "";
+    // Env variables to be setup for the shell command
+    private Map<String, String> shellEnv = new HashMap<>();
+    private volatile boolean done;
+    private ByteBuffer allTokens;
+    // Launch threads
+    private List<Thread> launchThreads = new ArrayList<>();
+    private ConcurrentHashMap<ContainerId, Container> runningContainers = new ConcurrentHashMap<>();
+    // Container memory overhead in MB
+    private int memoryOverhead = 10;
+
+    public ApplicationMaster() {
+        // Set up the configuration
+        conf = new YarnConfiguration();
+        appNodeMainClass = ApplicationNode.class.getName();
     }
 
     public static void main(String[] args) {
@@ -231,12 +216,6 @@ public class ApplicationMaster {
         } finally {
             IOUtils.cleanup(LOG, buf);
         }
-    }
-
-    public ApplicationMaster() {
-        // Set up the configuration
-        conf = new YarnConfiguration();
-        appNodeMainClass = ApplicationNode.class.getName();
     }
 
     /**
@@ -594,6 +573,49 @@ public class ApplicationMaster {
         return request;
     }
 
+    private String readContent(String filePath) throws IOException {
+        DataInputStream ds = null;
+        try {
+            ds = new DataInputStream(Files.newInputStream(Paths.get(filePath)));
+            return ds.readUTF();
+        } finally {
+            org.apache.commons.io.IOUtils.closeQuietly(ds);
+        }
+    }
+
+    private void recoverExecutors(List<Container> previousAMRunningContainers) {
+        for (Container container : previousAMRunningContainers) {
+            runningContainers.putIfAbsent(container.getId(), container);
+        }
+    }
+
+    private void requestKContainers(int askCount) {
+        LOG.info("Request new containers count:" + askCount);
+        for (int i = 0; i < askCount; ++i) {
+            ContainerRequest containerAsk = setupContainerAskForRM();
+            amRMClient.addContainerRequest(containerAsk);
+        }
+        numRequestedContainers.set(numTotalContainers);
+    }
+
+    private synchronized void askMoreContainersIfNecessary() {
+        int askCount = numTotalContainers - runningContainers.size();
+        if (askCount > 0) {
+            LOG.info("Request more containers count:" + askCount);
+            requestKContainers(askCount);
+        } else {
+            LOG.info("No more to ask for containers");
+        }
+    }
+
+    public ConcurrentHashMap<ContainerId, Container> getRunningContainers() {
+        return runningContainers;
+    }
+
+    private boolean fileExist(String filePath) {
+        return new File(filePath).exists();
+    }
+
     /**
      * NMCallbackHandler
      */
@@ -775,49 +797,6 @@ public class ApplicationMaster {
             RuntimeUtil.destroy(exec);
             amRMClient.stop();
         }
-    }
-
-    private String readContent(String filePath) throws IOException {
-        DataInputStream ds = null;
-        try {
-            ds = new DataInputStream(Files.newInputStream(Paths.get(filePath)));
-            return ds.readUTF();
-        } finally {
-            org.apache.commons.io.IOUtils.closeQuietly(ds);
-        }
-    }
-
-    private void recoverExecutors(List<Container> previousAMRunningContainers) {
-        for (Container container : previousAMRunningContainers) {
-            runningContainers.putIfAbsent(container.getId(), container);
-        }
-    }
-
-    private void requestKContainers(int askCount) {
-        LOG.info("Request new containers count:" + askCount);
-        for (int i = 0; i < askCount; ++i) {
-            ContainerRequest containerAsk = setupContainerAskForRM();
-            amRMClient.addContainerRequest(containerAsk);
-        }
-        numRequestedContainers.set(numTotalContainers);
-    }
-
-    private synchronized void askMoreContainersIfNecessary() {
-        int askCount = numTotalContainers - runningContainers.size();
-        if (askCount > 0) {
-            LOG.info("Request more containers count:" + askCount);
-            requestKContainers(askCount);
-        } else {
-            LOG.info("No more to ask for containers");
-        }
-    }
-
-    public ConcurrentHashMap<ContainerId, Container> getRunningContainers() {
-        return runningContainers;
-    }
-
-    private boolean fileExist(String filePath) {
-        return new File(filePath).exists();
     }
 
     /**

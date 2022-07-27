@@ -29,6 +29,11 @@ import java.util.Properties;
 
 public class AdminTest {
 
+    public static void main(String[] args) throws ParseException {
+        System.out.println("args:" + ArrayUtil.toString(args));
+        new AdminTest().testOptions(args);
+    }
+
     @Test
     public void admin() {
         String data1 = "{\"id\": 1, \"msg\": \"OK\"}";
@@ -89,11 +94,6 @@ public class AdminTest {
             System.out.println(objectObjectEntry.getKey() + " = " + objectObjectEntry.getValue());
         }
 
-    }
-
-    public static void main(String[] args) throws ParseException {
-        System.out.println("args:" + ArrayUtil.toString(args));
-        new AdminTest().testOptions(args);
     }
 
     @Test

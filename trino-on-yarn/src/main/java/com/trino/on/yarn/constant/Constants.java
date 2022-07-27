@@ -60,20 +60,20 @@ public class Constants {
                     "-Djava.library.path=/usr/lib/hadoop/lib/native/:/usr/lib/hadoop-lzo/lib/native/:/usr/lib/\n" +
                     "-Djdk.attach.allowAttachSelf=true\n" +
                     "--add-exports=java.base/jdk.internal.util=ALL-UNNAMED \n" +
-            "--add-opens=java.base/jdk.internal.util=ALL-UNNAMED\n" +
-            "--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED\n" +
-            "--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED\n" +
-            "--add-exports=java.base/jdk.internal.module=ALL-UNNAMED\n" +
-            "--add-opens=java.base/jdk.internal.module=ALL-UNNAMED\n" +
-            "--add-exports=java.base/java.lang.module=ALL-UNNAMED\n" +
-            "--add-opens=java.base/java.lang.module=ALL-UNNAMED\n" +
-            "--add-exports=java.base/jdk.internal.util.jar=ALL-UNNAMED\n" +
-            "--add-opens=java.base/jdk.internal.util.jar=ALL-UNNAMED\n" +
-            "--add-exports=java.base/jdk.internal.reflect=ALL-UNNAMED\n" +
-            "--add-opens=java.base/jdk.internal.reflect=ALL-UNNAMED\n" +
-            "--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED\n" +
-            "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED\n" +
-            "-Djava.rmi.server.hostname=localhost";
+                    "--add-opens=java.base/jdk.internal.util=ALL-UNNAMED\n" +
+                    "--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED\n" +
+                    "--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED\n" +
+                    "--add-exports=java.base/jdk.internal.module=ALL-UNNAMED\n" +
+                    "--add-opens=java.base/jdk.internal.module=ALL-UNNAMED\n" +
+                    "--add-exports=java.base/java.lang.module=ALL-UNNAMED\n" +
+                    "--add-opens=java.base/java.lang.module=ALL-UNNAMED\n" +
+                    "--add-exports=java.base/jdk.internal.util.jar=ALL-UNNAMED\n" +
+                    "--add-opens=java.base/jdk.internal.util.jar=ALL-UNNAMED\n" +
+                    "--add-exports=java.base/jdk.internal.reflect=ALL-UNNAMED\n" +
+                    "--add-opens=java.base/jdk.internal.reflect=ALL-UNNAMED\n" +
+                    "--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED\n" +
+                    "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED\n" +
+                    "-Djava.rmi.server.hostname=localhost";
 
     public static final String TRINO_ENV = "trino-env.sh";
 

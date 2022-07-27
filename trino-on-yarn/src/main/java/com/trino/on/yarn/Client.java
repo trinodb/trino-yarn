@@ -63,6 +63,18 @@ public class Client {
     // Configuration
     private final Configuration conf;
     private final YarnClient yarnClient;
+    // Main class to invoke application master
+    private final String appMasterMainClass;
+    // Env variables to be setup for the shell command
+    private final Map<String, String> shellEnv = new HashMap<>();
+    // Shell Command Container priority
+    private final int shellCmdPriority = 0;
+    // Start time for client
+    private final long clientStartTime = System.currentTimeMillis();
+    // Command line options
+    private final Options opts;
+    // Debug flag
+    boolean debugFlag = false;
     // Application master specific info to register a new Application with RM/ASM
     private String appName = "";
     // App master priority
@@ -73,46 +85,25 @@ public class Client {
     private int amMemory = 10;
     // Amt. of virtual core resource to request for to run the App Master
     private int amVCores = 1;
-
     // Application master jar file
     private String appMasterJar = "";
-    // Main class to invoke application master
-    private final String appMasterMainClass;
-
     private String[] shellArgs = new String[]{};
     private String[] javaOpts = new String[]{};
-    // Env variables to be setup for the shell command
-    private final Map<String, String> shellEnv = new HashMap<>();
-    // Shell Command Container priority
-    private final int shellCmdPriority = 0;
-
     // Amt of memory to request for container in which shell script will be executed
     private int containerMemory = 10;
     // Amt. of virtual cores to request for container in which shell script will be executed
     private int containerVirtualCores = 1;
     // No. of containers in which the shell script needs to be executed
     private int numContainers = 1;
-
     // log4j.properties file
     // if available, add to local resources and set into classpath
     private String log4jPropFile = "";
-
-    // Start time for client
-    private final long clientStartTime = System.currentTimeMillis();
     // Timeout threshold for client. Kill app after time interval expires.
     // -1 means no timeout so that the application will not be killed after timeout,
     // in other words, long time running job will be kept running.
     private long clientTimeout = -1;
-
     // flag to indicate whether to keep containers across application attempts.
     private boolean keepContainers = false;
-
-    // Debug flag
-    boolean debugFlag = false;
-
-    // Command line options
-    private final Options opts;
-
     private int memoryOverhead = 50;
 
     private JobInfo jobInfo;
@@ -130,37 +121,7 @@ public class Client {
 
 
     /**
-     * @param args Command line arguments
-     */
-    public static void main(String[] args) {
-        boolean result = false;
-        try {
-            Client client = new Client();
-            LOG.info("Initializing Client");
-            try {
-                boolean doRun = client.init(args);
-                if (!doRun) {
-                    System.exit(0);
-                }
-            } catch (IllegalArgumentException e) {
-                System.err.println(e.getLocalizedMessage());
-                client.printUsage();
-                System.exit(-1);
-            }
-            result = client.run();
-        } catch (Throwable t) {
-            LOG.fatal("Error running CLient", t);
-            System.exit(1);
-        }
-        if (result) {
-            LOG.info("Application completed successfully");
-            System.exit(0);
-        }
-        LOG.error("Application failed");
-        System.exit(2);
-    }
-
-    /**
+     *
      */
     public Client(Configuration conf) {
         this(ApplicationMaster.class.getName(), conf);
@@ -205,9 +166,41 @@ public class Client {
     }
 
     /**
+     *
      */
     public Client() throws Exception {
         this(new YarnConfiguration());
+    }
+
+    /**
+     * @param args Command line arguments
+     */
+    public static void main(String[] args) {
+        boolean result = false;
+        try {
+            Client client = new Client();
+            LOG.info("Initializing Client");
+            try {
+                boolean doRun = client.init(args);
+                if (!doRun) {
+                    System.exit(0);
+                }
+            } catch (IllegalArgumentException e) {
+                System.err.println(e.getLocalizedMessage());
+                client.printUsage();
+                System.exit(-1);
+            }
+            result = client.run();
+        } catch (Throwable t) {
+            LOG.fatal("Error running CLient", t);
+            System.exit(1);
+        }
+        if (result) {
+            LOG.info("Application completed successfully");
+            System.exit(0);
+        }
+        LOG.error("Application failed");
+        System.exit(2);
     }
 
     /**
@@ -502,7 +495,7 @@ public class Client {
             classPathEnv.append(c.trim());
         }
         classPathEnv.append(ApplicationConstants.CLASS_PATH_SEPARATOR).append(
-                "./log4j.properties");
+                "log4j.properties");
 
         // add the runtime classpath needed for tests to work
         if (conf.getBoolean(YarnConfiguration.IS_MINI_YARN_CLUSTER, false)) {

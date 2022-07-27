@@ -11,8 +11,8 @@ import java.sql.*;
 import java.util.List;
 
 public class TrinoJdbc {
-    protected static final Log LOG = LogFactory.getLog(TrinoJdbc.class);
     public static final String JDBC_TRINO = "jdbc:trino://{}:{}/hive";
+    protected static final Log LOG = LogFactory.getLog(TrinoJdbc.class);
 
     public static void run(String ip, Integer port, String email, String sqls) throws ClassNotFoundException, SQLException {
         Connection connection = null;
