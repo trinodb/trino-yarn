@@ -2,6 +2,7 @@ package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.thread.GlobalThreadPool;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -38,15 +39,13 @@ public class ApplicationNode {
         try {
             ApplicationNode applicationNode = new ApplicationNode();
             applicationNode.init(args);
-            Thread.sleep(3000);
+            ThreadUtil.sleep(3000);
             exec = new TrinoExecutorNode(jobInfo, jobInfo.getAmMemory()).run();
             while (Server.NODE_FINISH.equals(0)) {
-                Thread.sleep(500);
+                ThreadUtil.sleep(500);
             }
             if (Server.NODE_FINISH.equals(1)) {
                 result = true;
-            } else {
-                result = false;
             }
             LOG.info("ApplicationNode finish");
         } catch (Throwable t) {

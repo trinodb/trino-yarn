@@ -16,6 +16,7 @@ package com.trino.on.yarn;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.thread.GlobalThreadPool;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -62,6 +63,8 @@ import org.apache.log4j.LogManager;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -179,14 +182,11 @@ public class ApplicationMaster {
             }
             appMaster.run();
             while (Server.MASTER_FINISH.equals(0)) {
-                Thread.sleep(500);
+                ThreadUtil.sleep(500);
             }
             if (Server.MASTER_FINISH.equals(1)) {
                 result = appMaster.finish();
-            } else {
-                result = false;
             }
-
             LOG.info("ApplicationMaster finish");
         } catch (Throwable t) {
             LOG.fatal("Error running ApplicationMaster", t);
@@ -522,10 +522,7 @@ public class ApplicationMaster {
 /*            if (Server.MASTER_FINISH.equals(2)) {
                 break;
             }*/
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-            }
+            ThreadUtil.sleep(1000);
         }
 
         // Join all launched threads
@@ -780,6 +777,49 @@ public class ApplicationMaster {
         }
     }
 
+    private String readContent(String filePath) throws IOException {
+        DataInputStream ds = null;
+        try {
+            ds = new DataInputStream(Files.newInputStream(Paths.get(filePath)));
+            return ds.readUTF();
+        } finally {
+            org.apache.commons.io.IOUtils.closeQuietly(ds);
+        }
+    }
+
+    private void recoverExecutors(List<Container> previousAMRunningContainers) {
+        for (Container container : previousAMRunningContainers) {
+            runningContainers.putIfAbsent(container.getId(), container);
+        }
+    }
+
+    private void requestKContainers(int askCount) {
+        LOG.info("Request new containers count:" + askCount);
+        for (int i = 0; i < askCount; ++i) {
+            ContainerRequest containerAsk = setupContainerAskForRM();
+            amRMClient.addContainerRequest(containerAsk);
+        }
+        numRequestedContainers.set(numTotalContainers);
+    }
+
+    private synchronized void askMoreContainersIfNecessary() {
+        int askCount = numTotalContainers - runningContainers.size();
+        if (askCount > 0) {
+            LOG.info("Request more containers count:" + askCount);
+            requestKContainers(askCount);
+        } else {
+            LOG.info("No more to ask for containers");
+        }
+    }
+
+    public ConcurrentHashMap<ContainerId, Container> getRunningContainers() {
+        return runningContainers;
+    }
+
+    private boolean fileExist(String filePath) {
+        return new File(filePath).exists();
+    }
+
     /**
      * Thread to connect to the {@link ContainerManagementProtocol} and launch the container
      * that will execute the shell command.
@@ -858,7 +898,7 @@ public class ApplicationMaster {
             }
 
             // Set the necessary command to execute on the allocated container
-            Vector<CharSequence> vargs = new Vector<CharSequence>(10);
+            Vector<CharSequence> vargs = new Vector<>(10);
 
             // Set java executable command
             vargs.add(ApplicationConstants.Environment.JAVA_HOME.$$() + "/bin/java");
@@ -896,49 +936,6 @@ public class ApplicationMaster {
             List<String> commands = new ArrayList<>();
             commands.add(command.toString());
             return commands;
-        }
-    }
-
-    private void recoverExecutors(List<Container> previousAMRunningContainers) {
-        for (Container container : previousAMRunningContainers) {
-            runningContainers.putIfAbsent(container.getId(), container);
-        }
-    }
-
-    private void requestKContainers(int askCount) {
-        LOG.info("Request new containers count:" + askCount);
-        for (int i = 0; i < askCount; ++i) {
-            ContainerRequest containerAsk = setupContainerAskForRM();
-            amRMClient.addContainerRequest(containerAsk);
-        }
-        numRequestedContainers.set(numTotalContainers);
-    }
-
-    private synchronized void askMoreContainersIfNecessary() {
-        int askCount = numTotalContainers - runningContainers.size();
-        if (askCount > 0) {
-            LOG.info("Request more containers count:" + askCount);
-            requestKContainers(askCount);
-        } else {
-            LOG.info("No more to ask for containers");
-        }
-    }
-
-    public ConcurrentHashMap<ContainerId, Container> getRunningContainers() {
-        return runningContainers;
-    }
-
-    private boolean fileExist(String filePath) {
-        return new File(filePath).exists();
-    }
-
-    private String readContent(String filePath) throws IOException {
-        DataInputStream ds = null;
-        try {
-            ds = new DataInputStream(new FileInputStream(filePath));
-            return ds.readUTF();
-        } finally {
-            org.apache.commons.io.IOUtils.closeQuietly(ds);
         }
     }
 }

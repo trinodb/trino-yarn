@@ -69,10 +69,7 @@ public class JobInfo {
             return true;
         } else if (StrUtil.startWith(catalog, S_3)) {
             return true;
-        } else if (StrUtil.startWith(catalog, S_3_N)) {
-            return true;
-        }
-        return false;
+        } else return StrUtil.startWith(catalog, S_3_N);
     }
 
     public String getCatalogHdfs() {
