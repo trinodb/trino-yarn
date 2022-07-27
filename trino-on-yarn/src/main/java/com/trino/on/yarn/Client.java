@@ -430,7 +430,7 @@ public class Client {
         } else {
             appContext.setApplicationType("trino");
         }
-        appContext.setApplicationTags(CollUtil.newHashSet(jobInfo.getIp(), String.valueOf(jobInfo.getPort())));
+        appContext.setApplicationTags(CollUtil.newHashSet(jobInfo.getIp() + ":" + jobInfo.getPort()));
         ApplicationId appId = appContext.getApplicationId();
 
         appContext.setKeepContainersAcrossApplicationAttempts(keepContainers);

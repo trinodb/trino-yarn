@@ -156,12 +156,14 @@ public abstract class TrinoExecutor {
         return path;
     }
 
+    private static final String clientLogMeta = "Trino Master IP:{} Port:{}";
     protected void end() {
         if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
             String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
             jobInfo.setStart(true);
             HttpUtil.post(clientRun, jobInfo.toString(), 10000);
         }
+        HttpUtil.post(clientLogApi, StrUtil.format(clientLogMeta, jobInfo.getIpMaster(), jobInfo.getPortTrino()), 10000);
     }
 
     protected void putEnv(String k, String v) {
