@@ -87,7 +87,7 @@ HDFS | hdfs://tmp/linkis/hadoop/catalog.zip
 Note: Only the Local mode provides the directory, others require the ZIP format
 
 * Run the example
-  ![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)
+![image](https://user-images.githubusercontent.com/28647031/181437326-3f4b2986-a837-46b0-9e70-1a4d8dc7eb08.png)
 
 ### Yarn-session Submits task
 
@@ -102,9 +102,11 @@ Note: Only the Local mode provides the directory, others require the ZIP format
   -job_info  /mnt/dss/trino/testJob.json
 ```
 
-The IP address and port of the Trino Master can be found in the log
+* The IP address and port of the Trino Master can be found in the log
+  ![image](https://user-images.githubusercontent.com/28647031/181228150-fa9cd89d-d022-4b12-b217-49827dd5a1e7.png)
 
-![image](https://user-images.githubusercontent.com/28647031/181228150-fa9cd89d-d022-4b12-b217-49827dd5a1e7.png)
+* Run the example
+  ![image](https://user-images.githubusercontent.com/28647031/181437686-cfcb43a8-b891-4681-9476-c798e6598914.png)
 
 ### logs
 
