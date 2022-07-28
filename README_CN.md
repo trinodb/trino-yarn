@@ -85,7 +85,8 @@ HDFS | hdfs://tmp/linkis/hadoop/catalog.zip
 注意:只有local模式提供目录,其他需要zip格式
 
 * 运行示例
-  ![image](https://user-images.githubusercontent.com/28647031/180349087-5138c867-58ef-4747-8bf5-802b5fec1167.png)
+
+![image](https://user-images.githubusercontent.com/28647031/181437326-3f4b2986-a837-46b0-9e70-1a4d8dc7eb08.png)
 
 ### yarn-session提交任务
 
@@ -100,9 +101,12 @@ HDFS | hdfs://tmp/linkis/hadoop/catalog.zip
   -job_info  /mnt/dss/trino/testJob.json
 ```
 
-可以从日志中找到trino Master的ip和端口
+* 以从日志中找到trino Master的ip和端口
 
 ![image](https://user-images.githubusercontent.com/28647031/181228150-fa9cd89d-d022-4b12-b217-49827dd5a1e7.png)
+
+* 运行示例
+![image](https://user-images.githubusercontent.com/28647031/181437686-cfcb43a8-b891-4681-9476-c798e6598914.png)
 
 
 ### 日志
