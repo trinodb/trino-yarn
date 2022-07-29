@@ -69,12 +69,12 @@ Parameter Description:
 
 parameters | instructions
 --- |---
-SQL | needs to execute SQL
-Jdk11Home | jdk11Home installation path
+SQL | needs to execute SQL,Yarn-per is mandatory, yarn-session is optional
+Jdk11Home | jdk11Home installation path,The environment variable JAVA11_HOME is preferred,is optional
 path | trino installation path
-catalog | trino directory
-user | submitted to the user
-debug | is set to true to master log to the Client
+catalog | trino catalog folder/zip
+user | submitted to the user,is optional
+debug | is set to true to master log to the Client,is optional
 
 catalog:
 
