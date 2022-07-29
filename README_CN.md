@@ -67,12 +67,12 @@ yarn单次执行(yarn-per)和yarn常驻进程(yarn-session)
 
 参数 |说明
 --- |---
-sql | 需要执行的sql
-jdk11Home | jdk11Home安装路径
+sql | 需要执行的sql,yarn-per必选,yarn-session可选
+jdk11Home | jdk11Home安装路径(优先使用环境变量JAVA11_HOME),可选参数
 path |trino安装路径
-catalog | trino目录
-user |提交用户
-debug |设置为true可将master日志打到Client
+catalog | trino catalog目录/zip
+user |提交用户,可选参数
+debug |设置为true可将master日志打到Client,可选参数
 
 catalog:
 
