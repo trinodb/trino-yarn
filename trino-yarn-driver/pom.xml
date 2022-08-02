@@ -32,6 +32,12 @@
 
         <dependency>
             <groupId>cn.hutool</groupId>
+            <artifactId>hutool-json</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.hutool</groupId>
             <artifactId>hutool-http</artifactId>
             <scope>compile</scope>
         </dependency>

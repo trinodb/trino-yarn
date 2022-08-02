@@ -14,6 +14,7 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ArrayUtil;
@@ -53,8 +54,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import static com.trino.on.yarn.constant.Constants.HDFS;
-import static com.trino.on.yarn.constant.Constants.S3;
+import static com.trino.on.yarn.constant.Constants.*;
 
 @InterfaceAudience.Public
 @InterfaceStability.Unstable
@@ -426,13 +426,13 @@ public class Client {
         // set the application name
         ApplicationSubmissionContext appContext = app.getApplicationSubmissionContext();
         if (jobInfo.getRunType().equalsIgnoreCase(RunType.YARN_PER.getName())) {
-            appContext.setApplicationType("trino-per-job");
+            appContext.setApplicationType(RunType.YARN_PER.getCode());
         } else if (jobInfo.getRunType().equalsIgnoreCase(RunType.YARN_SESSION.getName())) {
             String session = RunType.YARN_SESSION.getCode() + "-";
             if (StrUtil.startWith(jobInfo.getCatalog(), S3)) {
-                session = session + S3;
+                session = session + S3.toLowerCase(Locale.ROOT);
             } else {
-                session = session + HDFS;
+                session = session + DFS.toLowerCase(Locale.ROOT);
             }
             appContext.setApplicationType(session);
         } else {
@@ -440,6 +440,11 @@ public class Client {
         }
 
         ApplicationId appId = appContext.getApplicationId();
+
+        if (StrUtil.startWith(jobInfo.getCatalogHdfs(), S_3_A)) {
+            String bucket = jobInfo.getCatalogHdfs().replace(S_3_A, "").split("/")[0];
+            appContext.setApplicationTags(CollUtil.newHashSet(bucket));
+        }
 
         appContext.setKeepContainersAcrossApplicationAttempts(keepContainers);
         appContext.setApplicationName(appName);
