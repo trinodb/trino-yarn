@@ -14,7 +14,6 @@
 package com.trino.on.yarn;
 
 import cn.hutool.core.codec.Base64;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ArrayUtil;
@@ -53,6 +52,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
+
+import static com.trino.on.yarn.constant.Constants.HDFS;
+import static com.trino.on.yarn.constant.Constants.S3;
 
 @InterfaceAudience.Public
 @InterfaceStability.Unstable
@@ -426,11 +428,17 @@ public class Client {
         if (jobInfo.getRunType().equalsIgnoreCase(RunType.YARN_PER.getName())) {
             appContext.setApplicationType("trino-per-job");
         } else if (jobInfo.getRunType().equalsIgnoreCase(RunType.YARN_SESSION.getName())) {
-            appContext.setApplicationType("trino-session");
+            String session = RunType.YARN_SESSION.getCode() + "-";
+            if (StrUtil.startWith(jobInfo.getCatalog(), S3)) {
+                session = session + S3;
+            } else {
+                session = session + HDFS;
+            }
+            appContext.setApplicationType(session);
         } else {
             appContext.setApplicationType("trino");
         }
-        appContext.setApplicationTags(CollUtil.newHashSet(jobInfo.getIp() + ":" + jobInfo.getPort()));
+
         ApplicationId appId = appContext.getApplicationId();
 
         appContext.setKeepContainersAcrossApplicationAttempts(keepContainers);

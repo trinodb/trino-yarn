@@ -7,8 +7,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum RunType {
 
-    YARN_SESSION("yarn-session"),
-    YARN_PER("yarn-per");
+    YARN_SESSION("yarn-session", "trino-per-job"),
+    YARN_PER("yarn-per", "trino-session");
 
     private String name;
+    private String code;
 }

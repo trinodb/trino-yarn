@@ -20,6 +20,8 @@ public class Constants {
 
     public static final String HDFS = "hdfs://";
 
+    public static final String S3 = "s3";
+
     public static final String S_3_A = "s3a://";
 
     public static final String S_3_N = "s3n://";

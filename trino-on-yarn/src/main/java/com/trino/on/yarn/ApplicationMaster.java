@@ -38,6 +38,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.net.NetUtils;
@@ -62,13 +64,18 @@ import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.log4j.LogManager;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.trino.on.yarn.constant.Constants.HDFS;
+import static com.trino.on.yarn.constant.Constants.S_3_A;
 
 @Data
 @InterfaceAudience.Public
@@ -868,10 +875,37 @@ public class ApplicationMaster {
                 Throwables.propagate(e);
             }
 
+            String catalog = jobInfo.getCatalogHdfs();
             if (jobInfo.isHdfsOrS3()) {
                 try {
-                    YarnHelper.addToLocalResources(conf, jobInfo.getCatalogHdfs(), Constants.JAVA_TRINO_CATALOG_PATH, localResources);
+                    YarnHelper.addToLocalResources(conf, catalog, Constants.JAVA_TRINO_CATALOG_PATH, localResources);
                 } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            if (RunType.YARN_SESSION.getName().equalsIgnoreCase(jobInfo.getRunType())) {
+                try {
+                    String path = "{}/tmp/trino/{}/";
+                    String appId = appAttemptID.getApplicationId().toString();
+                    if (StrUtil.startWith(catalog, S_3_A)) {
+                        String bucket = catalog.replace(S_3_A, "").split("/")[0];
+                        path = StrUtil.format(path, S_3_A + bucket, appId);
+                    } else {
+                        path = StrUtil.format(path, conf.get("fs.defaultFS", HDFS), appId);
+                    }
+
+                    org.apache.hadoop.fs.FileSystem fs = YarnHelper.getFileSystem(conf, path);
+                    Path dst = new Path(path);
+                    if (!fs.exists(dst)) {
+                        fs.mkdirs(dst);
+                    }
+                    path = path + "/" + StrUtil.uuid() + ".json";
+                    dst = new Path(path);
+                    FSDataOutputStream out = fs.create(dst);
+                    out.write(jobInfo.toString().getBytes(StandardCharsets.UTF_8));
+                    out.close();
+                } catch (IOException | URISyntaxException e) {
                     throw new RuntimeException(e);
                 }
             }

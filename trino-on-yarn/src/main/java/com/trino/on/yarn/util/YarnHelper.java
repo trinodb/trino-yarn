@@ -98,6 +98,11 @@ public class YarnHelper {
     }
 
     public static Path addToLocalResources(Configuration conf, String path, String name, Map<String, LocalResource> localResources) throws IOException, URISyntaxException {
+        FileSystem fs = getFileSystem(conf, path);
+        return addToLocalResources(fs, path, name, localResources);
+    }
+
+    public static FileSystem getFileSystem(Configuration conf, String path) throws IOException, URISyntaxException {
         FileSystem fs;
         if (StrUtil.startWith(path, S_3_A)) {
             conf.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
@@ -105,7 +110,7 @@ public class YarnHelper {
         } else {
             fs = FileSystem.get(conf);
         }
-        return addToLocalResources(fs, path, name, localResources);
+        return fs;
     }
 
     public static Path addToLocalResources(FileSystem fs, String path, String name, Map<String, LocalResource> localResources) throws IOException {
