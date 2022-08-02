@@ -897,9 +897,10 @@ public class ApplicationMaster {
 
                     org.apache.hadoop.fs.FileSystem fs = YarnHelper.getFileSystem(conf, path);
                     Path dst = new Path(path);
-                    if (!fs.exists(dst)) {
-                        fs.mkdirs(dst);
+                    if (fs.exists(dst)) {
+                        fs.delete(dst, true);
                     }
+                    fs.mkdirs(dst);
                     path = path + "/" + StrUtil.uuid() + ".json";
                     dst = new Path(path);
                     FSDataOutputStream out = fs.create(dst);
