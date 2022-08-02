@@ -16,7 +16,6 @@ Trino-yarn Enables Trino to run on YARN
 * jdk11Home uses the environment variable JAVA11_HOME preference. if not, configure the jdk11Home parameter
 * Trino connection information is written to HDFS/S3 (the storage type depends on the catalog scheme. In addition, local
   is also written to HDFS, and the path is {scheme}/tmp/trino/{appId}/{uuid}.json).
-*
 
 ### Yarn-per Submits task
 
