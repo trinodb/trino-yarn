@@ -6,8 +6,6 @@ import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.IOUtils;
@@ -17,7 +15,6 @@ import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
 import java.util.List;
 
 public interface TrinoSessionBase {
@@ -26,9 +23,9 @@ public interface TrinoSessionBase {
 
     static Configuration getEntries(String hadoopConfDir) {
         Configuration conf = new Configuration();
-        conf.addResource(new Path(Paths.get(hadoopConfDir, "core-site.xml").toAbsolutePath().toFile().getAbsolutePath()));
+/*        conf.addResource(new Path(Paths.get(hadoopConfDir, "core-site.xml").toAbsolutePath().toFile().getAbsolutePath()));
         conf.addResource(new Path(Paths.get(hadoopConfDir, "hdfs-site.xml").toAbsolutePath().toFile().getAbsolutePath()));
-        conf.addResource(new Path(Paths.get(hadoopConfDir, "yarn-site.xml").toAbsolutePath().toFile().getAbsolutePath()));
+        conf.addResource(new Path(Paths.get(hadoopConfDir, "yarn-site.xml").toAbsolutePath().toFile().getAbsolutePath()));*/
         return conf;
     }
 
@@ -59,8 +56,6 @@ public interface TrinoSessionBase {
             isS3 = true;
             bucket = CollUtil.newArrayList(applicationReport.getApplicationTags()).get(0);
         }
-
-        JSONObject app = JSONUtil.createObj().putOpt("name", name).putOpt("appId", appId).putOpt("s3", isS3).putOpt("bucket", bucket);
 
         String path = "{}/tmp/trino/{}/";
         if (isS3) {

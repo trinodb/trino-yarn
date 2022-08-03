@@ -26,7 +26,7 @@
         <maven.compiler.target>8</maven.compiler.target>
         <hadoop.version>3.2.1</hadoop.version>
         <lombok.version>1.18.20</lombok.version>
-        <hutool.version>5.8.4</hutool.version>
+        <hutool.version>5.8.5</hutool.version>
         <trino.version>363</trino.version>
     </properties>
 
