@@ -13,6 +13,7 @@ trino-yarn可以让trino在yarn上运行
 * 支持将master日志打到Client,方便debug
 * trino数据源支持远程目录,例如hdfs/s3等
 * jdk11Home优先使用环境变量JAVA11_HOME,如果没有则使用配置jdk11Home参数
+* trino连接信息会写到hdfs/s3(存储类型根据catalog scheme决定,另外local也写hdfs,路径为{scheme}/tmp/trino/{appId}/{uuid}.json)
 
 ### yarn-per提交任务
 

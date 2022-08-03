@@ -54,6 +54,8 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import static com.trino.on.yarn.constant.Constants.*;
+
 @InterfaceAudience.Public
 @InterfaceStability.Unstable
 public class Client {
@@ -424,14 +426,25 @@ public class Client {
         // set the application name
         ApplicationSubmissionContext appContext = app.getApplicationSubmissionContext();
         if (jobInfo.getRunType().equalsIgnoreCase(RunType.YARN_PER.getName())) {
-            appContext.setApplicationType("trino-per-job");
+            appContext.setApplicationType(RunType.YARN_PER.getCode());
         } else if (jobInfo.getRunType().equalsIgnoreCase(RunType.YARN_SESSION.getName())) {
-            appContext.setApplicationType("trino-session");
+            String session = RunType.YARN_SESSION.getCode() + "-";
+            if (StrUtil.startWith(jobInfo.getCatalog(), S3)) {
+                session = session + S3.toLowerCase(Locale.ROOT);
+            } else {
+                session = session + DFS.toLowerCase(Locale.ROOT);
+            }
+            appContext.setApplicationType(session);
         } else {
             appContext.setApplicationType("trino");
         }
-        appContext.setApplicationTags(CollUtil.newHashSet(jobInfo.getIp() + ":" + jobInfo.getPort()));
+
         ApplicationId appId = appContext.getApplicationId();
+
+        if (StrUtil.startWith(jobInfo.getCatalogHdfs(), S_3_A)) {
+            String bucket = jobInfo.getCatalogHdfs().replace(S_3_A, "").split("/")[0];
+            appContext.setApplicationTags(CollUtil.newHashSet(bucket));
+        }
 
         appContext.setKeepContainersAcrossApplicationAttempts(keepContainers);
         appContext.setApplicationName(appName);
