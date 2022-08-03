@@ -22,11 +22,15 @@ import cn.hutool.http.HttpUtil;
 import com.trino.on.yarn.constant.RunType;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.Server;
+import com.trino.on.yarn.util.PrestoSQLHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.trino.on.yarn.constant.Constants.*;
 
@@ -131,6 +135,9 @@ public abstract class TrinoExecutor {
         if (jobInfo.isHdfsOrS3()) {
             catalog = path + "/" + JAVA_TRINO_CATALOG_PATH + "/" + JAVA_TRINO_CATALOG_PATH;
         }
+        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
+            catalog = catalogFilter(catalog);
+        }
         String nodes = StrUtil.format(TRINO_NODE_CONTENT, StrUtil.uuid(), path, catalog, jobInfo.getPluginPath());
         for (String node : StrUtil.split(nodes, StrPool.LF)) {
             putEnv(node);
@@ -180,5 +187,27 @@ public abstract class TrinoExecutor {
 
     protected void putEnvExport(String kv) {
         trinoEnvExport.add("export " + kv);
+    }
+
+    protected String catalogFilter(String catalogsPath) {
+        List<String> catalogs = PrestoSQLHelper.getStatementData(jobInfo.getSql());
+        Map<String, String> files = FileUtil.loopFiles(catalogsPath).stream().collect(Collectors.toMap(f -> StrUtil.subBefore(f.getName(), ".", true), File::getAbsolutePath));
+        List<String> fileNames = CollUtil.newArrayList(files.keySet());
+        List<String> catalogsNew = new ArrayList<>(catalogs);
+        for (String catalog : catalogs) {
+            if (fileNames.contains(catalog)) {
+                catalogsNew.add(catalog);
+            } else {
+                throw new RuntimeException("catalog :" + catalog + " is exist");
+            }
+        }
+
+        String path = catalogsPath + "/" + JAVA_TRINO_CATALOG_PATH;
+        for (String catalog : catalogsNew) {
+            String catalogPath = files.get(catalog);
+            FileUtil.copy(catalogPath, path, true);
+        }
+
+        return path;
     }
 }
