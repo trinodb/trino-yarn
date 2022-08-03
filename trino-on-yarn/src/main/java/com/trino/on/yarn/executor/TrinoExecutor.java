@@ -202,7 +202,7 @@ public abstract class TrinoExecutor {
             }
         }
 
-        String path = catalogsPath + "/" + JAVA_TRINO_CATALOG_PATH;
+        String path = this.path + "/" + JAVA_TRINO_CATALOG_PATH + "new";
         for (String catalog : catalogsNew) {
             String catalogPath = files.get(catalog);
             FileUtil.copy(catalogPath, path, true);
