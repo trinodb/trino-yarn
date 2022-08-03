@@ -15,7 +15,9 @@ public class PrestoSQLHelper {
 
     public static List<String> getStatementData(String sqls) {
         Set<String> catalogs = CollUtil.newHashSet();
-        ParsingOptions parsingOptions = new ParsingOptions(ParsingOptions.DecimalLiteralTreatment.AS_DOUBLE);
+        ParsingOptions parsingOptions = ParsingOptions.builder()
+                .setDecimalLiteralTreatment(ParsingOptions.DecimalLiteralTreatment.AS_DOUBLE)
+                .build();
         if (StrUtil.isBlank(sqls)) return CollUtil.newArrayList(catalogs);
         for (String sql : StrUtil.split(sqls, ";")) {
             Statement statement = SQL_PARSER.createStatement(sql, parsingOptions);
