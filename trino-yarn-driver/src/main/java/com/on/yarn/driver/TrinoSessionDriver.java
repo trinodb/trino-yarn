@@ -1,6 +1,5 @@
 package com.on.yarn.driver;
 
-import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
@@ -21,10 +20,6 @@ public class TrinoSessionDriver implements TrinoSessionBase {
                 yarnClient.stop();
             }
         }));
-    }
-
-    public static void main(String[] args) {
-        System.out.println(RandomUtil.randomInt(0, 1));
     }
 
     public static String getDriverInfo(String hadoopConfDir) throws IOException, YarnException, URISyntaxException {
