@@ -31,12 +31,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>1.2.78</version>
-        </dependency>
-
-        <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-json</artifactId>
             <scope>compile</scope>
