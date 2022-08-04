@@ -478,7 +478,6 @@ public class Client {
 
 
         String catalogHdfs = jobInfo.getCatalogHdfs();
-        ;
         if (!jobInfo.isHdfsOrS3()) {
             if (FileUtil.isDirectory(catalogHdfs)) {
                 String zip = ZipUtil.zip(catalogHdfs).getAbsolutePath();
