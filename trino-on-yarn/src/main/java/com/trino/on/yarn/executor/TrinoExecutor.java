@@ -22,11 +22,15 @@ import cn.hutool.http.HttpUtil;
 import com.trino.on.yarn.constant.RunType;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.Server;
+import com.trino.on.yarn.util.PrestoSQLHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.trino.on.yarn.constant.Constants.*;
 
@@ -128,9 +132,19 @@ public abstract class TrinoExecutor {
         putEnv(LOG_OUTPUT_FILE, logPath);
         putEnv("log.enable-console=true");
         String catalog = jobInfo.getCatalog();
+        //压缩包可能存在多一层嵌套问题
         if (jobInfo.isHdfsOrS3()) {
             catalog = path + "/" + JAVA_TRINO_CATALOG_PATH + "/" + JAVA_TRINO_CATALOG_PATH;
+            if (!FileUtil.exist(catalog)) {
+                catalog = path + "/" + JAVA_TRINO_CATALOG_PATH;
+            }
+            if (!FileUtil.exist(catalog)) {
+                throw new RuntimeException("catalog not found");
+            }
         }
+/*        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
+            catalog = catalogFilter(catalog);
+        }*/
         String nodes = StrUtil.format(TRINO_NODE_CONTENT, StrUtil.uuid(), path, catalog, jobInfo.getPluginPath());
         for (String node : StrUtil.split(nodes, StrPool.LF)) {
             putEnv(node);
@@ -180,5 +194,28 @@ public abstract class TrinoExecutor {
 
     protected void putEnvExport(String kv) {
         trinoEnvExport.add("export " + kv);
+    }
+
+    protected String catalogFilter(String catalogsPath) {
+        List<String> catalogs = PrestoSQLHelper.getStatementData(jobInfo.getSql());
+        Map<String, String> files = FileUtil.loopFiles(catalogsPath).stream().collect(Collectors.toMap(f -> StrUtil.subBefore(f.getName(), ".", true), File::getAbsolutePath));
+        List<String> fileNames = CollUtil.newArrayList(files.keySet());
+        List<String> catalogsNew = new ArrayList<>(catalogs);
+        for (String catalog : catalogs) {
+            if (fileNames.contains(catalog)) {
+                catalogsNew.add(catalog);
+            } else {
+                throw new RuntimeException("catalog :" + catalog + " is exist");
+            }
+        }
+
+        String path = this.path + "/" + JAVA_TRINO_CATALOG_PATH + "new/";
+        FileUtil.mkdir(path);
+        for (String catalog : catalogsNew) {
+            String catalogPath = files.get(catalog);
+            FileUtil.copy(catalogPath, path, true);
+        }
+
+        return path;
     }
 }

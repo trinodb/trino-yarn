@@ -19,6 +19,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ZipUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.trino.on.yarn.constant.Constants;
@@ -475,12 +476,23 @@ public class Client {
             YarnHelper.addToLocalResources(appName, fs, null, Constants.JAVA_OPTS_PATH, appId.toString(), localResources, ArrayUtil.join(javaOpts, " "));
         }
 
-        if (jobInfo.isHdfsOrS3()) {
-            try {
-                YarnHelper.addToLocalResources(conf, jobInfo.getCatalogHdfs(), Constants.JAVA_TRINO_CATALOG_PATH, localResources);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+
+        String catalogHdfs = jobInfo.getCatalogHdfs();
+        if (!jobInfo.isHdfsOrS3()) {
+            if (FileUtil.isDirectory(catalogHdfs)) {
+                String zip = ZipUtil.zip(catalogHdfs).getAbsolutePath();
+                catalogHdfs = YarnHelper.put(appName, fs, zip, JAVA_TRINO_CATALOG_PATH + ".zip", appId.toString());
+                if (!StrUtil.startWith(catalogHdfs, HDFS)) {
+                    catalogHdfs = HDFS + catalogHdfs;
+                }
+                jobInfo.setCatalog(catalogHdfs);
             }
+        }
+
+        try {
+            YarnHelper.addToLocalResources(conf, catalogHdfs, Constants.JAVA_TRINO_CATALOG_PATH, localResources);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         // Set the necessary security tokens as needed

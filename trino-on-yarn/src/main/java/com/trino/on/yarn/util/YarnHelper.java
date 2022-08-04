@@ -127,6 +127,18 @@ public class YarnHelper {
     public static Path addToLocalResources(String appName, FileSystem fs, String fileSrcPath,
                                            String fileDstPath, String appId, Map<String, LocalResource> localResources,
                                            String resources) throws IOException {
+        Path dst = getPath(appName, fs, fileSrcPath, fileDstPath, appId, resources);
+        FileStatus scFileStatus = fs.getFileStatus(dst);
+        LocalResource scRsrc =
+                LocalResource.newInstance(
+                        ConverterUtils.getYarnUrlFromURI(dst.toUri()),
+                        LocalResourceType.FILE, LocalResourceVisibility.APPLICATION,
+                        scFileStatus.getLen(), scFileStatus.getModificationTime());
+        localResources.put(fileDstPath, scRsrc);
+        return dst;
+    }
+
+    public static Path getPath(String appName, FileSystem fs, String fileSrcPath, String fileDstPath, String appId, String resources) throws IOException {
         String suffix = appName + "/" + appId + "/" + fileDstPath;
         Path dst = new Path(fs.getHomeDirectory(), suffix);
         if (fileSrcPath == null) {
@@ -140,13 +152,14 @@ public class YarnHelper {
         } else {
             fs.copyFromLocalFile(new Path(fileSrcPath), dst);
         }
-        FileStatus scFileStatus = fs.getFileStatus(dst);
-        LocalResource scRsrc =
-                LocalResource.newInstance(
-                        ConverterUtils.getYarnUrlFromURI(dst.toUri()),
-                        LocalResourceType.FILE, LocalResourceVisibility.APPLICATION,
-                        scFileStatus.getLen(), scFileStatus.getModificationTime());
-        localResources.put(fileDstPath, scRsrc);
         return dst;
+    }
+
+
+    public static String put(String appName, FileSystem fs, String fileSrcPath, String fileDstPath, String appId) throws IOException {
+        String suffix = appName + "/" + appId + "/" + fileDstPath;
+        Path dst = new Path(fs.getHomeDirectory(), suffix);
+        fs.copyFromLocalFile(new Path(fileSrcPath), dst);
+        return dst.toUri().getRawPath();
     }
 }
