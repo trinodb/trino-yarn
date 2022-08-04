@@ -16,6 +16,7 @@ package com.trino.on.yarn.executor;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.StrPool;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
@@ -132,12 +133,19 @@ public abstract class TrinoExecutor {
         putEnv(LOG_OUTPUT_FILE, logPath);
         putEnv("log.enable-console=true");
         String catalog = jobInfo.getCatalog();
+        //压缩包可能存在多一层嵌套问题
         if (jobInfo.isHdfsOrS3()) {
             catalog = path + "/" + JAVA_TRINO_CATALOG_PATH + "/" + JAVA_TRINO_CATALOG_PATH;
+            if (!FileUtil.exist(catalog)) {
+                catalog = path + "/" + JAVA_TRINO_CATALOG_PATH;
+            }
+            if (!FileUtil.exist(catalog)) {
+                throw new RuntimeException("catalog not found");
+            }
         }
-        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
+/*        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
             catalog = catalogFilter(catalog);
-        }
+        }*/
         String nodes = StrUtil.format(TRINO_NODE_CONTENT, StrUtil.uuid(), path, catalog, jobInfo.getPluginPath());
         for (String node : StrUtil.split(nodes, StrPool.LF)) {
             putEnv(node);
@@ -193,6 +201,7 @@ public abstract class TrinoExecutor {
         List<String> catalogs = PrestoSQLHelper.getStatementData(jobInfo.getSql());
         Map<String, String> files = FileUtil.loopFiles(catalogsPath).stream().collect(Collectors.toMap(f -> StrUtil.subBefore(f.getName(), ".", true), File::getAbsolutePath));
         List<String> fileNames = CollUtil.newArrayList(files.keySet());
+        ThreadUtil.sleep(100000000L);
         List<String> catalogsNew = new ArrayList<>(catalogs);
         for (String catalog : catalogs) {
             if (fileNames.contains(catalog)) {
@@ -202,7 +211,8 @@ public abstract class TrinoExecutor {
             }
         }
 
-        String path = this.path + "/" + JAVA_TRINO_CATALOG_PATH + "new";
+        String path = this.path + "/" + JAVA_TRINO_CATALOG_PATH + "new/";
+        FileUtil.mkdir(path);
         for (String catalog : catalogsNew) {
             String catalogPath = files.get(catalog);
             FileUtil.copy(catalogPath, path, true);

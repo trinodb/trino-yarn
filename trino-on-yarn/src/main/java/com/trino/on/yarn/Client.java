@@ -478,11 +478,14 @@ public class Client {
 
 
         String catalogHdfs = jobInfo.getCatalogHdfs();
+        ;
         if (!jobInfo.isHdfsOrS3()) {
             if (FileUtil.isDirectory(catalogHdfs)) {
                 String zip = ZipUtil.zip(catalogHdfs).getAbsolutePath();
-                Path path = YarnHelper.getPath(appName, fs, zip, JAVA_TRINO_CATALOG_PATH, appId.toString(), null);
-                catalogHdfs = path.toUri().getPath();
+                catalogHdfs = YarnHelper.put(appName, fs, zip, JAVA_TRINO_CATALOG_PATH + ".zip", appId.toString());
+                if (!StrUtil.startWith(catalogHdfs, HDFS)) {
+                    catalogHdfs = HDFS + catalogHdfs;
+                }
                 jobInfo.setCatalog(catalogHdfs);
             }
         }

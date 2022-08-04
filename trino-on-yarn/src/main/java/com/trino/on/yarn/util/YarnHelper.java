@@ -154,4 +154,12 @@ public class YarnHelper {
         }
         return dst;
     }
+
+
+    public static String put(String appName, FileSystem fs, String fileSrcPath, String fileDstPath, String appId) throws IOException {
+        String suffix = appName + "/" + appId + "/" + fileDstPath;
+        Path dst = new Path(fs.getHomeDirectory(), suffix);
+        fs.copyFromLocalFile(new Path(fileSrcPath), dst);
+        return dst.toUri().getRawPath();
+    }
 }
