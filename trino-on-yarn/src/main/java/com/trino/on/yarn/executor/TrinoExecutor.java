@@ -16,7 +16,6 @@ package com.trino.on.yarn.executor;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.StrPool;
-import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
@@ -201,7 +200,6 @@ public abstract class TrinoExecutor {
         List<String> catalogs = PrestoSQLHelper.getStatementData(jobInfo.getSql());
         Map<String, String> files = FileUtil.loopFiles(catalogsPath).stream().collect(Collectors.toMap(f -> StrUtil.subBefore(f.getName(), ".", true), File::getAbsolutePath));
         List<String> fileNames = CollUtil.newArrayList(files.keySet());
-        ThreadUtil.sleep(100000000L);
         List<String> catalogsNew = new ArrayList<>(catalogs);
         for (String catalog : catalogs) {
             if (fileNames.contains(catalog)) {
