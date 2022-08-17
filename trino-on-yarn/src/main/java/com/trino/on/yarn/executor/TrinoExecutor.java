@@ -225,7 +225,7 @@ public abstract class TrinoExecutor {
             if (fileNames.contains(properties)) {
                 catalogsNew.add(properties);
             } else {
-                throw new RuntimeException("catalog :" + catalog + " is exist");
+                throw new RuntimeException("catalog :" + catalog + " does not exist,please check the sql.");
             }
         }
 
