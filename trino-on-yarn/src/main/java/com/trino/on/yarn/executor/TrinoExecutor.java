@@ -23,17 +23,23 @@ import com.trino.on.yarn.constant.RunType;
 import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.PrestoSQLHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
+import org.apache.hadoop.fs.Path;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.trino.on.yarn.constant.Constants.*;
 
+@Slf4j
 public abstract class TrinoExecutor {
     protected static final Log LOG = LogFactory.getLog(TrinoExecutor.class);
 
@@ -45,6 +51,7 @@ public abstract class TrinoExecutor {
     protected boolean endStart = false;
     protected String path;
     protected boolean nodeSchedulerIncludeCoordinator = false;
+    private String catalogNew;
 
     public TrinoExecutor(JobInfo jobInfo, int amMemory) {
         this.jobInfo = jobInfo;
@@ -101,9 +108,11 @@ public abstract class TrinoExecutor {
         final String conf = path + "/conf/";
         final String data = path + "/data/";
         final String logPath = path + "/server.log";
+        catalogNew = path + "/" + JAVA_TRINO_CATALOG_PATH + "new/";
 
         FileUtil.mkdir(conf);
         FileUtil.mkdir(data);
+        FileUtil.mkdir(catalogNew);
 
         String log = StrUtil.format(TRINO_LOG_CONTENT, "WARN");
         File logFile = FileUtil.writeUtf8String(log, conf + TRINO_LOG);
@@ -142,9 +151,13 @@ public abstract class TrinoExecutor {
                 throw new RuntimeException("catalog not found");
             }
         }
-/*        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
-            catalog = catalogFilter(catalog);
-        }*/
+        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
+            try {
+                catalog = catalogFilter(catalog);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         String nodes = StrUtil.format(TRINO_NODE_CONTENT, StrUtil.uuid(), path, catalog, jobInfo.getPluginPath());
         for (String node : StrUtil.split(nodes, StrPool.LF)) {
             putEnv(node);
@@ -171,6 +184,7 @@ public abstract class TrinoExecutor {
     }
 
     private static final String clientLogMeta = "Trino Master IP:{} Port:{}";
+
     protected void end() {
         if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
             String clientRun = Server.formatUrl(Server.CLIENT_RUN, jobInfo.getIp(), jobInfo.getPort());
@@ -196,26 +210,30 @@ public abstract class TrinoExecutor {
         trinoEnvExport.add("export " + kv);
     }
 
-    protected String catalogFilter(String catalogsPath) {
+    protected String catalogFilter(String catalogsPath) throws IOException {
+        Configuration conf = new Configuration();
+        LocalFileSystem fs = FileSystem.getLocal(conf);
+        FileStatus[] status = fs.listStatus(new Path(catalogsPath));
+        List<String> fileNames = CollUtil.newArrayList();
+        for (FileStatus fileStatus : status) {
+            fileNames.add(fileStatus.getPath().getName());
+        }
         List<String> catalogs = PrestoSQLHelper.getStatementData(jobInfo.getSql());
-        Map<String, String> files = FileUtil.loopFiles(catalogsPath).stream().collect(Collectors.toMap(f -> StrUtil.subBefore(f.getName(), ".", true), File::getAbsolutePath));
-        List<String> fileNames = CollUtil.newArrayList(files.keySet());
-        List<String> catalogsNew = new ArrayList<>(catalogs);
+        List<String> catalogsNew = new ArrayList<>();
         for (String catalog : catalogs) {
-            if (fileNames.contains(catalog)) {
-                catalogsNew.add(catalog);
+            String properties = catalog + ".properties";
+            if (fileNames.contains(properties)) {
+                catalogsNew.add(properties);
             } else {
                 throw new RuntimeException("catalog :" + catalog + " is exist");
             }
         }
 
-        String path = this.path + "/" + JAVA_TRINO_CATALOG_PATH + "new/";
-        FileUtil.mkdir(path);
         for (String catalog : catalogsNew) {
-            String catalogPath = files.get(catalog);
-            FileUtil.copy(catalogPath, path, true);
+            String catalogPath = catalogsPath + "/" + catalog;
+            fs.copyToLocalFile(new Path(catalogPath), new Path(catalogNew));
         }
 
-        return path;
+        return catalogNew;
     }
 }
