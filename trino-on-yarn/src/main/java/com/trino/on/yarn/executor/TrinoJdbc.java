@@ -12,6 +12,7 @@ import java.util.List;
 
 public class TrinoJdbc {
     public static final String JDBC_TRINO = "jdbc:trino://{}:{}/hive";
+    private static final String CONNECTION_TEST_QUERY = "SELECT 1";
     protected static final Log LOG = LogFactory.getLog(TrinoJdbc.class);
 
     private static Connection connection = null;
@@ -27,32 +28,42 @@ public class TrinoJdbc {
                 email = "root";
             }
             connection = DriverManager.getConnection(StrUtil.format(JDBC_TRINO, ip, port), email, null);
-
+            connectionTestQuery(connection);
             for (String sql : StrUtil.split(sqls, ";")) {
                 LOG.warn("execute sql:" + sql);
                 execute(connection, sql);
             }
         } finally {
             IoUtil.close(connection);
+            IoUtil.close(resultSet);
+            IoUtil.close(statement);
+        }
+    }
+
+    private static void connectionTestQuery(Connection connection) {
+        try {
+            IoUtil.close(statement);
+            statement = connection.createStatement();
+            statement.execute(CONNECTION_TEST_QUERY);
+        } catch (SQLException e) {
+            String message = e.getMessage();
+            if (message.contains("initializing")) {
+                ThreadUtil.sleep(1000);
+                connectionTestQuery(connection);
+            } else {
+                throw new RuntimeException("connectionTestQuery failed!", e);
+            }
+        } finally {
+            IoUtil.close(statement);
         }
     }
 
     public static void execute(Connection connection, String sql) throws SQLException {
         try {
-            IoUtil.close(resultSet);
-            IoUtil.close(statement);
             statement = connection.createStatement();
             boolean execute = statement.execute(sql);
             // TODO: 2022/7/27 这里可能会出现问题,暂不启用
             printResults(sql, execute);
-        } catch (SQLException e) {
-            String message = e.getMessage();
-            if (message.contains("initializing")) {
-                ThreadUtil.sleep(500);
-                execute(connection, sql);
-            } else {
-                throw e;
-            }
         } finally {
             IoUtil.close(resultSet);
             IoUtil.close(statement);
