@@ -20,8 +20,6 @@ public class TrinoJdbc {
     private static ResultSet resultSet = null;
 
     public static void run(String ip, Integer port, String email, String sqls) throws ClassNotFoundException, SQLException {
-
-
         try {
             Class.forName("io.trino.jdbc.TrinoDriver");
             if (StrUtil.isEmpty(email)) {
@@ -36,24 +34,6 @@ public class TrinoJdbc {
         } finally {
             IoUtil.close(connection);
             IoUtil.close(resultSet);
-            IoUtil.close(statement);
-        }
-    }
-
-    private static void connectionTestQuery(Connection connection) {
-        try {
-            IoUtil.close(statement);
-            statement = connection.createStatement();
-            statement.execute(CONNECTION_TEST_QUERY);
-        } catch (SQLException e) {
-            String message = e.getMessage();
-            if (message.contains("initializing")) {
-                ThreadUtil.sleep(1000);
-                connectionTestQuery(connection);
-            } else {
-                throw new RuntimeException("connectionTestQuery failed!", e);
-            }
-        } finally {
             IoUtil.close(statement);
         }
     }
@@ -107,6 +87,24 @@ public class TrinoJdbc {
             System.out.println("耗时：" + (System.currentTimeMillis() - start) + "ms");
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void connectionTestQuery(Connection connection) {
+        try {
+            IoUtil.close(statement);
+            statement = connection.createStatement();
+            statement.execute(CONNECTION_TEST_QUERY);
+        } catch (SQLException e) {
+            String message = e.getMessage();
+            if (message.contains("initializing")) {
+                ThreadUtil.sleep(1000);
+                connectionTestQuery(connection);
+            } else {
+                throw new RuntimeException("connectionTestQuery failed!", e);
+            }
+        } finally {
+            IoUtil.close(statement);
         }
     }
 }
