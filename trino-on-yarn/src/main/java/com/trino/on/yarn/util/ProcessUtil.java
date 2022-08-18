@@ -4,6 +4,7 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
+import com.trino.on.yarn.entity.JobInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -12,8 +13,7 @@ import java.lang.reflect.Field;
 
 @Slf4j
 public class ProcessUtil {
-    private static final String PORT = "netstat -nlp | grep :{} | awk '{print $7}' | awk -F\"/\" '{ print $1 }' | xargs kill -9";
-
+    private static final String PORT = "ps -ef | grep {} | grep -v \"grep\" | awk '{print $2}' | xargs kill -9";
     private static String getProcessId(Process process) {
         long pid = -1;
         Field field;
@@ -28,15 +28,17 @@ public class ProcessUtil {
         return String.valueOf(pid);
     }
 
-    public static boolean killPid(Process process, int portTrino) {
-        killByPort(String.valueOf(portTrino));
+    public static boolean killPid(Process process, JobInfo info) {
+        if (StrUtil.isNotBlank(info.getAppId())) {
+            killAll(String.valueOf(info.getAppId()));
+        }
         String processId = getProcessId(process);
         boolean bool = killProcessByPid(processId);
         RuntimeUtil.destroy(process);
         return bool;
     }
 
-    private static void killByPort(String port) {
+    private static void killAll(String port) {
         String command = StrUtil.format(PORT, port);
         RuntimeUtil.exec(command);
     }
@@ -63,9 +65,10 @@ public class ProcessUtil {
             process = RuntimeUtil.exec(command);
             inputStream = process.getInputStream();
             IoUtil.readUtf8Lines(inputStream, (LineHandler) log::info);
+            assert process.waitFor() == 0;
             result = true;
         } catch (Exception e) {
-            log.error("process error", e);
+            log.error("process error" + command, e);
             result = false;
         } finally {
             RuntimeUtil.destroy(process);

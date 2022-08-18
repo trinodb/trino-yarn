@@ -22,7 +22,7 @@ import static com.trino.on.yarn.constant.Constants.*;
 
 @Data
 public class JobInfo {
-
+    private String appId;
     private String jdk11Home;
     private String sql;
     private String path;

@@ -13,7 +13,6 @@
  */
 package com.trino.on.yarn;
 
-import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.SystemPropsUtil;
 import cn.hutool.http.ContentType;
@@ -24,14 +23,15 @@ import com.trino.on.yarn.server.Server;
 import org.apache.commons.cli.*;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.Map;
 import java.util.Properties;
 
 public class AdminTest {
 
     public static void main(String[] args) throws ParseException {
-        System.out.println("args:" + ArrayUtil.toString(args));
-        new AdminTest().testOptions(args);
+        String absolutePath = new File(".").getAbsolutePath();
+        System.out.println(absolutePath);
     }
 
     @Test

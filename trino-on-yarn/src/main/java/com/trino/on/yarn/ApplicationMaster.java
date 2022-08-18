@@ -92,7 +92,7 @@ public class ApplicationMaster {
 
     static {
         RuntimeUtil.addShutdownHook(new Thread(() -> {
-            ProcessUtil.killPid(exec, jobInfo.getPortTrino());
+            ProcessUtil.killPid(exec, jobInfo);
             GlobalThreadPool.shutdown(true);
         }));
     }
@@ -177,7 +177,7 @@ public class ApplicationMaster {
             while (Server.MASTER_FINISH.equals(0)) {
                 ThreadUtil.sleep(500);
             }
-            ProcessUtil.killPid(exec, jobInfo.getPortTrino());
+            ProcessUtil.killPid(exec, jobInfo);
             if (Server.MASTER_FINISH.equals(1)) {
                 result = appMaster.finish();
             }
@@ -187,7 +187,7 @@ public class ApplicationMaster {
             LogManager.shutdown();
             ExitUtil.terminate(1, t);
         } finally {
-            ProcessUtil.killPid(exec, jobInfo.getPortTrino());
+            ProcessUtil.killPid(exec, jobInfo);
         }
         if (result) {
             LOG.info("Application Master completed successfully. exiting");
@@ -303,7 +303,8 @@ public class ApplicationMaster {
         jobInfo.setPortMaster(simpleServer.getAddress().getPort());
         jobInfo.setPortTrino(NetUtil.getUsableLocalPort());
         jobInfo.setAmMemory(amMemory);
-
+        String absolutePath = new File(".").getAbsolutePath();
+        jobInfo.setAppId(YarnHelper.getYarnAppId(absolutePath));
         Map<String, String> envs = System.getenv();
 
         if (!envs.containsKey(Environment.CONTAINER_ID.name())) {
@@ -554,7 +555,7 @@ public class ApplicationMaster {
         }
 
         amRMClient.stop();
-        ProcessUtil.killPid(exec, jobInfo.getPortTrino());
+        ProcessUtil.killPid(exec, jobInfo);
 
         return success;
     }
@@ -786,7 +787,7 @@ public class ApplicationMaster {
         @Override
         public void onShutdownRequest() {
             done = true;
-            ProcessUtil.killPid(exec, jobInfo.getPortTrino());
+            ProcessUtil.killPid(exec, jobInfo);
         }
 
         @Override
@@ -803,7 +804,7 @@ public class ApplicationMaster {
         @Override
         public void onError(Throwable e) {
             done = true;
-            ProcessUtil.killPid(exec, jobInfo.getPortTrino());
+            ProcessUtil.killPid(exec, jobInfo);
             amRMClient.stop();
         }
     }

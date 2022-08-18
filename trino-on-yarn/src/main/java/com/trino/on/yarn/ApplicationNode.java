@@ -31,7 +31,7 @@ public class ApplicationNode {
 
     static {
         RuntimeUtil.addShutdownHook(new Thread(() -> {
-            ProcessUtil.killPid(exec, jobInfo.getNodeTrinoPort());
+            ProcessUtil.killPid(exec, jobInfo);
             GlobalThreadPool.shutdown(true);
         }));
     }
@@ -56,7 +56,7 @@ public class ApplicationNode {
             ExitUtil.terminate(1, t);
             System.exit(2);
         } finally {
-            ProcessUtil.killPid(exec, jobInfo.getNodeTrinoPort());
+            ProcessUtil.killPid(exec, jobInfo);
         }
 
         if (result) {
