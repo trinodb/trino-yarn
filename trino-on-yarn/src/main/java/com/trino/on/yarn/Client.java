@@ -29,6 +29,7 @@ import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.ClientServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
+import com.trino.on.yarn.util.ProcessUtil;
 import com.trino.on.yarn.util.YarnHelper;
 import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
@@ -366,7 +367,7 @@ public class Client {
         } catch (Exception e) {
             LOG.error(chown + " failed");
         } finally {
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec);
         }
     }
 

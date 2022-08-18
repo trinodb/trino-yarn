@@ -30,6 +30,7 @@ import com.trino.on.yarn.executor.TrinoExecutorMaster;
 import com.trino.on.yarn.server.MasterServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
+import com.trino.on.yarn.util.ProcessUtil;
 import com.trino.on.yarn.util.YarnHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
@@ -91,7 +92,7 @@ public class ApplicationMaster {
 
     static {
         RuntimeUtil.addShutdownHook(new Thread(() -> {
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec);
             GlobalThreadPool.shutdown(true);
         }));
     }
@@ -185,7 +186,7 @@ public class ApplicationMaster {
             LogManager.shutdown();
             ExitUtil.terminate(1, t);
         } finally {
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec);
         }
         if (result) {
             LOG.info("Application Master completed successfully. exiting");
@@ -552,7 +553,7 @@ public class ApplicationMaster {
         }
 
         amRMClient.stop();
-        RuntimeUtil.destroy(exec);
+        ProcessUtil.killPid(exec);
 
         return success;
     }
@@ -784,7 +785,7 @@ public class ApplicationMaster {
         @Override
         public void onShutdownRequest() {
             done = true;
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec);
         }
 
         @Override
@@ -801,7 +802,7 @@ public class ApplicationMaster {
         @Override
         public void onError(Throwable e) {
             done = true;
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec);
             amRMClient.stop();
         }
     }

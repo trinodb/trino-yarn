@@ -11,6 +11,7 @@ import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.executor.TrinoExecutorNode;
 import com.trino.on.yarn.server.NodeServer;
 import com.trino.on.yarn.server.Server;
+import com.trino.on.yarn.util.ProcessUtil;
 import lombok.Data;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -30,7 +31,7 @@ public class ApplicationNode {
 
     static {
         RuntimeUtil.addShutdownHook(new Thread(() -> {
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec);
             GlobalThreadPool.shutdown(true);
         }));
     }
@@ -55,7 +56,7 @@ public class ApplicationNode {
             ExitUtil.terminate(1, t);
             System.exit(2);
         } finally {
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec);
         }
 
         if (result) {
