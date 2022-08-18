@@ -220,7 +220,7 @@ public class Client {
      * @return Whether the init was successful to run the client
      * @throws ParseException
      */
-    public boolean init(String[] args) throws ParseException {
+    public boolean init(String[] args) throws ParseException, IOException {
         CommandLineParser gnuParser = new GnuParser();
         CommandLine cliParser = gnuParser.parse(opts, args);
         if (args.length == 0) {
@@ -334,6 +334,15 @@ public class Client {
             }
         } else
             throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
+
+        if (StrUtil.isNotBlank(jobInfo.getUser())) {
+            FileSystem fs = FileSystem.get(conf);
+            Path path = new Path("/user/" + jobInfo.getUser());
+            if (!fs.exists(path)) {
+                fs.mkdirs(path);
+                fs.setOwner(path, jobInfo.getUser(), null);
+            }
+        }
 
         LOG.warn("jobInfo:" + jobInfo);
 
@@ -459,6 +468,7 @@ public class Client {
         // Copy the application master jar to the filesystem
         // Create a local resource to point to the destination jar path
         FileSystem fs = FileSystem.get(conf);
+
         Path dst = YarnHelper.addToLocalResources(appName, fs, appMasterJar, Constants.APP_MASTER_JAR_PATH, appId.toString(), localResources, null);
 
         YarnHelper.addFrameworkToDistributedCache(dst.toUri().toString(), localResources, conf);
