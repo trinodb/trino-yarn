@@ -18,6 +18,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ZipUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -336,19 +337,14 @@ public class Client {
             throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
 
         if (StrUtil.isNotBlank(jobInfo.getUser())) {
-            FileSystem fs = FileSystem.get(conf);
-            Path path = new Path("/user/" + jobInfo.getUser());
-            if (!fs.exists(path)) {
-                fs.mkdirs(path);
-                fs.setOwner(path, jobInfo.getUser(), null);
-            }
+            String mkdirStr = "hdfs dfs -mkdir /user/{}";
+            String chownStr = "hdfs dfs -chown -R {} /user/{}";
+            exec(StrUtil.format(mkdirStr, jobInfo.getUser()));
+            exec(StrUtil.format(chownStr, jobInfo.getUser(), jobInfo.getUser()));
+            System.setProperty("HADOOP_USER_NAME", jobInfo.getUser());
         }
 
         LOG.warn("jobInfo:" + jobInfo);
-
-        if (StrUtil.isNotBlank(jobInfo.getUser())) {
-            System.setProperty("HADOOP_USER_NAME", jobInfo.getUser());
-        }
 
         simpleServer = ClientServer.initClient();
         InetSocketAddress inetSocketAddress = simpleServer.getAddress();
@@ -358,6 +354,20 @@ public class Client {
         jobInfo.setNumTotalContainers(numContainers);
 
         return true;
+    }
+
+    private void exec(String chown) {
+        Process exec = null;
+        try {
+            exec = RuntimeUtil.exec(chown);
+            if (exec.waitFor() != 0) {
+                LOG.error(chown + " failed");
+            }
+        } catch (Exception e) {
+            LOG.error(chown + " failed");
+        } finally {
+            RuntimeUtil.destroy(exec);
+        }
     }
 
     /**
