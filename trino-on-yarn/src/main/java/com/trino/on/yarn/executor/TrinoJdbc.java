@@ -2,6 +2,8 @@ package com.trino.on.yarn.executor;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.text.StrBuilder;
+import cn.hutool.core.text.StrPool;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import org.apache.commons.logging.Log;
@@ -71,7 +73,8 @@ public class TrinoJdbc {
                 columns.add(md.getColumnName(i));
             }
 
-            System.out.println(StrUtil.join("  |  ", columns));
+            StrBuilder strBuilder = new StrBuilder(StrUtil.join("  |  ", columns));
+            strBuilder.append(StrPool.LF);
             int j = 0;
             while (resultSet.next() && j < 10) {//遍历查询结果，获取每一列字符串长度的最大值，保存在数组中
                 StringBuilder sb = new StringBuilder();
@@ -81,10 +84,11 @@ public class TrinoJdbc {
                         sb.append("  |  ");
                     }
                 }
-                System.out.println(sb);
+                strBuilder.append(sb.toString()).append(StrPool.LF);
                 j++;
             }
-            System.out.println("耗时：" + (System.currentTimeMillis() - start) + "ms");
+            strBuilder.append("耗时：" + (System.currentTimeMillis() - start) + "ms");
+            System.out.println(strBuilder);
         } catch (Exception e) {
             e.printStackTrace();
         }
