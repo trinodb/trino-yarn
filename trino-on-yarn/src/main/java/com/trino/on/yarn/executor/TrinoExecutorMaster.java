@@ -21,8 +21,14 @@ public class TrinoExecutorMaster extends TrinoExecutor {
 
     @Override
     protected void log(Process exec) throws InterruptedException {
-        long start = System.currentTimeMillis();
-
+        ThreadUtil.execAsync(() -> {
+                    ThreadUtil.sleep(1000 * 60);
+                    if (!endStart) {
+                        endStart = true;
+                        end();
+                    }
+                }
+        );
         ThreadUtil.execAsync(() -> {
             InputStream inputStream = exec.getInputStream();
             IoUtil.readUtf8Lines(inputStream, (LineHandler) line -> {
@@ -32,10 +38,6 @@ public class TrinoExecutorMaster extends TrinoExecutor {
                         endStart = true;
                         end();
                     }
-                }
-                if (!endStart && (System.currentTimeMillis() - start) > 1000 * 60) {
-                    endStart = true;
-                    end();
                 }
                 LOG.info(line);
                 if (jobInfo.isDebug()) {
