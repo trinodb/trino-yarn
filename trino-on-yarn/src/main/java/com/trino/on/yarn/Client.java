@@ -18,7 +18,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ArrayUtil;
-import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ZipUtil;
 import cn.hutool.http.server.SimpleServer;
@@ -340,8 +339,8 @@ public class Client {
         if (StrUtil.isNotBlank(jobInfo.getUser())) {
             String mkdirStr = "hdfs dfs -mkdir /user/{}";
             String chownStr = "hdfs dfs -chown -R {} /user/{}";
-            exec(StrUtil.format(mkdirStr, jobInfo.getUser()));
-            exec(StrUtil.format(chownStr, jobInfo.getUser(), jobInfo.getUser()));
+            ProcessUtil.exec(StrUtil.format(mkdirStr, jobInfo.getUser()));
+            ProcessUtil.exec(StrUtil.format(chownStr, jobInfo.getUser(), jobInfo.getUser()));
             System.setProperty("HADOOP_USER_NAME", jobInfo.getUser());
         }
 
@@ -355,20 +354,6 @@ public class Client {
         jobInfo.setNumTotalContainers(numContainers);
 
         return true;
-    }
-
-    private void exec(String chown) {
-        Process exec = null;
-        try {
-            exec = RuntimeUtil.exec(chown);
-            if (exec.waitFor() != 0) {
-                LOG.error(chown + " failed");
-            }
-        } catch (Exception e) {
-            LOG.error(chown + " failed");
-        } finally {
-            ProcessUtil.killPid(exec);
-        }
     }
 
     /**

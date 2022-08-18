@@ -34,6 +34,7 @@ public class JobInfo {
     private boolean node;
     private String ipNode;
     private int portNode;
+    private int nodeTrinoPort;
     private int portTrino;
     private boolean test;
     private boolean debug;

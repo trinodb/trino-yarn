@@ -92,7 +92,7 @@ public class ApplicationMaster {
 
     static {
         RuntimeUtil.addShutdownHook(new Thread(() -> {
-            ProcessUtil.killPid(exec);
+            ProcessUtil.killPid(exec, jobInfo.getPortTrino());
             GlobalThreadPool.shutdown(true);
         }));
     }
@@ -177,6 +177,7 @@ public class ApplicationMaster {
             while (Server.MASTER_FINISH.equals(0)) {
                 ThreadUtil.sleep(500);
             }
+            ProcessUtil.killPid(exec, jobInfo.getPortTrino());
             if (Server.MASTER_FINISH.equals(1)) {
                 result = appMaster.finish();
             }
@@ -186,7 +187,7 @@ public class ApplicationMaster {
             LogManager.shutdown();
             ExitUtil.terminate(1, t);
         } finally {
-            ProcessUtil.killPid(exec);
+            ProcessUtil.killPid(exec, jobInfo.getPortTrino());
         }
         if (result) {
             LOG.info("Application Master completed successfully. exiting");
@@ -553,7 +554,7 @@ public class ApplicationMaster {
         }
 
         amRMClient.stop();
-        ProcessUtil.killPid(exec);
+        ProcessUtil.killPid(exec, jobInfo.getPortTrino());
 
         return success;
     }
@@ -785,7 +786,7 @@ public class ApplicationMaster {
         @Override
         public void onShutdownRequest() {
             done = true;
-            ProcessUtil.killPid(exec);
+            ProcessUtil.killPid(exec, jobInfo.getPortTrino());
         }
 
         @Override
@@ -802,7 +803,7 @@ public class ApplicationMaster {
         @Override
         public void onError(Throwable e) {
             done = true;
-            ProcessUtil.killPid(exec);
+            ProcessUtil.killPid(exec, jobInfo.getPortTrino());
             amRMClient.stop();
         }
     }
