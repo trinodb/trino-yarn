@@ -177,7 +177,6 @@ public class ApplicationMaster {
             while (Server.MASTER_FINISH.equals(0)) {
                 ThreadUtil.sleep(500);
             }
-            ProcessUtil.killPid(exec, jobInfo);
             if (Server.MASTER_FINISH.equals(1)) {
                 result = appMaster.finish();
             }

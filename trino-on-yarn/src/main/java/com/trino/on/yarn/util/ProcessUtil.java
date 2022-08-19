@@ -1,7 +1,9 @@
 package com.trino.on.yarn.util;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
+import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.trino.on.yarn.entity.JobInfo;
@@ -13,7 +15,9 @@ import java.lang.reflect.Field;
 
 @Slf4j
 public class ProcessUtil {
-    private static final String PORT = "ps -ef | grep {} | grep -v \"grep\" | awk '{print $2}' | xargs kill -9";
+    private static final String PORT = "ps -ef | grep {} | grep io.trino.server.TrinoServer | grep -v \"grep\" | awk '{print $2}' | xargs kill -9";
+    private static final String PORT_2 = "ps -ef | grep {} | grep io.trino.server.TrinoServer | awk '{print $2}' | xargs kill -9";
+
     private static String getProcessId(Process process) {
         long pid = -1;
         Field field;
@@ -39,8 +43,11 @@ public class ProcessUtil {
     }
 
     private static void killAll(String port) {
-        String command = StrUtil.format(PORT, port);
-        RuntimeUtil.exec(command);
+        String command = StrUtil.format(PORT, port) + StrPool.LF + StrUtil.format(PORT_2, port);
+        log.info("kill process command: {}", command);
+        String absolutePath = FileUtil.writeUtf8String(command, FileUtil.file(".")).getAbsolutePath();
+        exec("sh " + absolutePath);
+        FileUtil.del(absolutePath);
     }
 
     /**
