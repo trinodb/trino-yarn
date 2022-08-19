@@ -139,6 +139,9 @@ public abstract class TrinoExecutor {
         putEnv(LOG_LEVELS_FILE, logFile.getAbsolutePath());
         putEnv(CONFIG, configEnv.getAbsolutePath());
         putEnv(LOG_OUTPUT_FILE, logPath);
+        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
+            putEnv("yarn_url_api", jobInfo.getHeartbeat());
+        }
         putEnv("log.enable-console=true");
         String catalog = jobInfo.getCatalog();
         //压缩包可能存在多一层嵌套问题

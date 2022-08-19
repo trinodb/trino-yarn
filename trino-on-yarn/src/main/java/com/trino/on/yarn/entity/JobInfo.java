@@ -43,6 +43,7 @@ public class JobInfo {
     private int numTotalContainers;
     private int amMemory;
     private boolean start;
+    private String heartbeat;
 
     public String getPluginPath() {
         return path + "/plugin";

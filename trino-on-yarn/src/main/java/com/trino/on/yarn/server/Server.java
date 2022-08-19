@@ -30,6 +30,7 @@ public class Server {
     public static final String CLIENT_RUN = "/client/run";
     public static final String CLIENT_LOG = "/client/log";
     public static final String MASTER_END = "/master/end";
+    public static final String MASTER_HEARTBEAT = "/master/heartbeat";
     public static final String NODE_END = "/node/end";
     protected static final Log LOG = LogFactory.getLog(Server.class);
     private static final String HTTP = "http://{}:{}";

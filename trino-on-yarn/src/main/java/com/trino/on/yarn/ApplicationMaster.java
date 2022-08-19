@@ -303,6 +303,7 @@ public class ApplicationMaster {
         jobInfo.setPortMaster(simpleServer.getAddress().getPort());
         jobInfo.setPortTrino(NetUtil.getUsableLocalPort());
         jobInfo.setAmMemory(amMemory);
+        jobInfo.setHeartbeat("http://" + jobInfo.getIpMaster() + ":" + jobInfo.getPortMaster() + Server.MASTER_HEARTBEAT);
         String absolutePath = new File(".").getAbsolutePath();
         jobInfo.setAppId(YarnHelper.getYarnAppId(absolutePath));
         Map<String, String> envs = System.getenv();

@@ -17,6 +17,8 @@ public class MasterServer extends Server {
             LOG.warn("master end:" + request.getBody());
             MASTER_FINISH = JSONUtil.parseObj(request.getBody()).getInt("start", 0);
             responseWriteSuccess(response);
+        }).addAction(MASTER_HEARTBEAT, (request, response) -> {
+            responseWriteSuccess(response);
         }).start();
         return server;
     }
