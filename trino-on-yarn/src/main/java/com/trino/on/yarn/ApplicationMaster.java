@@ -923,6 +923,8 @@ public class ApplicationMaster {
             // Set am memory size
             vargs.add("-Xms" + containerMemory + "m");
             vargs.add("-Xmx" + containerMemory + "m");
+            vargs.add("-Duser.language=zh");
+            vargs.add("-Dfile.encoding=utf-8");
             vargs.add(javaOpts);
 
             // Set tmp dir

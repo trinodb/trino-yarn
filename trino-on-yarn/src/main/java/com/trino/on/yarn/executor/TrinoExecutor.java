@@ -142,6 +142,8 @@ public abstract class TrinoExecutor {
         if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
             putEnv("yarn_url_api", jobInfo.getHeartbeat());
         }
+        putEnv("user.language=zh");
+        putEnv("file.encoding=utf-8");
         putEnv("log.enable-console=true");
         String catalog = jobInfo.getCatalog();
         //压缩包可能存在多一层嵌套问题

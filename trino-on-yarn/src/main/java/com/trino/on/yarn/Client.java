@@ -545,6 +545,8 @@ public class Client {
         vargs.add(System.getenv("JAVA_HOME") + "/bin/java");
         // Set Xmx based on am memory size
         vargs.add("-Xmx" + amMemory + "m");
+        vargs.add("-Duser.language=zh");
+        vargs.add("-Dfile.encoding=utf-8");
         // Set class name
         vargs.add(appMasterMainClass);
         // Set params for Application Master
