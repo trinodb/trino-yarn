@@ -8,38 +8,20 @@ import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.trino.on.yarn.entity.JobInfo;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.InputStream;
-import java.lang.reflect.Field;
 
 @Slf4j
 public class ProcessUtil {
     private static final String PORT = "ps -ef | grep {} | grep io.trino.server.TrinoServer | grep -v \"grep\" | awk '{print $2}' | xargs kill -9";
     private static final String PORT_2 = "ps -ef | grep {} | grep io.trino.server.TrinoServer | awk '{print $2}' | xargs kill -9";
 
-    private static String getProcessId(Process process) {
-        long pid = -1;
-        Field field;
-        try {
-            Class<?> clazz = Class.forName("java.lang.UNIXProcess");
-            field = clazz.getDeclaredField("pid");
-            field.setAccessible(true);
-            pid = (Integer) field.get(process);
-        } catch (Throwable e) {
-            log.error("get process id for unix error {0}", e);
-        }
-        return String.valueOf(pid);
-    }
-
     public static boolean killPid(Process process, JobInfo info) {
         if (StrUtil.isNotBlank(info.getAppId())) {
             killAll(String.valueOf(info.getAppId()));
         }
-        String processId = getProcessId(process);
-        boolean bool = killProcessByPid(processId);
         RuntimeUtil.destroy(process);
-        return bool;
+        return true;
     }
 
     private static void killAll(String port) {
@@ -48,19 +30,6 @@ public class ProcessUtil {
         String absolutePath = FileUtil.writeUtf8String(command, FileUtil.file(".")).getAbsolutePath();
         exec("sh " + absolutePath);
         FileUtil.del(absolutePath);
-    }
-
-    /**
-     * 关闭Linux进程
-     *
-     * @param pid 进程的PID
-     */
-    private static boolean killProcessByPid(String pid) {
-        if (StringUtils.isEmpty(pid) || "-1".equals(pid)) {
-            throw new RuntimeException("Pid ==" + pid);
-        }
-        String command = "kill -9 " + pid;
-        return exec(command);
     }
 
     public static boolean exec(String command) {
