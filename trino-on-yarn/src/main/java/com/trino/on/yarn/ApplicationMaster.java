@@ -19,6 +19,7 @@ import cn.hutool.core.thread.GlobalThreadPool;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
@@ -31,6 +32,7 @@ import com.trino.on.yarn.server.MasterServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
 import com.trino.on.yarn.util.ProcessUtil;
+import com.trino.on.yarn.util.SystemMXBeanUtil;
 import com.trino.on.yarn.util.YarnHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
@@ -378,6 +380,16 @@ public class ApplicationMaster {
             throw new IllegalArgumentException("Cannot run distributed shell with no containers");
         }
         requestPriority = Integer.parseInt(cliParser.getOptionValue("priority", "0"));
+
+        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
+            String clientLogApi = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
+            while (SystemMXBeanUtil.getFreePhysicalMemorySize() < (amMemory * 1.2)) {
+                String logStr = "insufficient memory, waiting......";
+                LOG.info(logStr);
+                HttpUtil.post(clientLogApi, logStr, 3000);
+                ThreadUtil.sleep(5000);
+            }
+        }
 
         return true;
     }
