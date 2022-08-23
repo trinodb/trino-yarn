@@ -4,7 +4,6 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.thread.ThreadUtil;
-import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.trino.on.yarn.entity.JobInfo;
 
@@ -51,7 +50,6 @@ public class TrinoExecutorNode extends TrinoExecutor {
                 throw new RuntimeException("job error", e);
             } finally {
                 IoUtil.close(inputStream);
-                RuntimeUtil.destroy(exec);
             }
         });
 

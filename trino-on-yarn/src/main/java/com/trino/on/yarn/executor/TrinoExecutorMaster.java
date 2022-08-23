@@ -3,7 +3,6 @@ package com.trino.on.yarn.executor;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
 import cn.hutool.core.thread.ThreadUtil;
-import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.trino.on.yarn.constant.RunType;
@@ -55,7 +54,6 @@ public class TrinoExecutorMaster extends TrinoExecutor {
                 throw new RuntimeException("job error", e);
             } finally {
                 IoUtil.close(inputStream);
-                RuntimeUtil.destroy(exec);
             }
         });
     }

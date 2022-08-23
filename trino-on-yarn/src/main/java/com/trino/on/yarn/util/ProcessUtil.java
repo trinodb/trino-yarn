@@ -10,6 +10,7 @@ import com.trino.on.yarn.entity.JobInfo;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStream;
+import java.util.UUID;
 
 @Slf4j
 public class ProcessUtil {
@@ -27,9 +28,14 @@ public class ProcessUtil {
     private static void killAll(String port) {
         String command = StrUtil.format(PORT, port) + StrPool.LF + StrUtil.format(PORT_2, port);
         log.info("kill process command: {}", command);
-        String absolutePath = FileUtil.writeUtf8String(command, FileUtil.file(".")).getAbsolutePath();
+        String tmpPath = "/tmp/trino/";
+        if (!FileUtil.exist(tmpPath)) {
+            FileUtil.mkdir(tmpPath);
+        }
+        tmpPath = tmpPath + UUID.randomUUID().toString() + ".sh";
+        String absolutePath = FileUtil.writeUtf8String(command, tmpPath).getAbsolutePath();
         exec("sh " + absolutePath);
-        FileUtil.del(absolutePath);
+        FileUtil.del(tmpPath);
     }
 
     public static boolean exec(String command) {
