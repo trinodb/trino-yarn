@@ -85,6 +85,7 @@ import static com.trino.on.yarn.constant.Constants.S_3_A;
 @InterfaceStability.Unstable
 public class ApplicationMaster {
 
+    private static final String INSUFFICIENT_MEMORY = "insufficient memory, Need to memory:{}MB, The remaining memory{}, waiting......";
     public static final int DEFAULT_APP_MASTER_TRACKING_URL_PORT = 8090;
     private static final Log LOG = LogFactory.getLog(ApplicationMaster.class);
     private static int amMemory = 128;
@@ -383,14 +384,16 @@ public class ApplicationMaster {
 
         if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
             String clientLogApi = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
-            while (SystemMXBeanUtil.getFreePhysicalMemorySize() < (amMemory * 1.2)) {
-                String logStr = "insufficient memory, waiting......";
+            int freePhysicalMemorySize = SystemMXBeanUtil.getFreePhysicalMemorySize();
+            int memory = (int) (amMemory * 1.2);
+            while (freePhysicalMemorySize < memory) {
+                String logStr = StrUtil.format(INSUFFICIENT_MEMORY, amMemory, freePhysicalMemorySize);
                 LOG.info(logStr);
                 HttpUtil.post(clientLogApi, logStr, 3000);
                 ThreadUtil.sleep(5000);
+                freePhysicalMemorySize = SystemMXBeanUtil.getFreePhysicalMemorySize();
             }
         }
-
         return true;
     }
 
