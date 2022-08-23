@@ -9,6 +9,6 @@ public class SystemMXBeanUtil {
     public static int getFreePhysicalMemorySize() {
         OperatingSystemMXBean osmb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         long freePhysicalMemorySize = osmb.getFreePhysicalMemorySize();
-        return (int) (freePhysicalMemorySize / (1024 * 1024 * 1024));
+        return (int) (freePhysicalMemorySize / (1024 * 1024));
     }
 }
