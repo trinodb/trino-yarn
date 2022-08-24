@@ -2,9 +2,9 @@ package com.trino.on.yarn.util;
 
 import oshi.SystemInfo;
 
-public class SystemMXBeanUtil {
+public class OSUtil {
 
-    public static int getAvailablePhysicalMemorySize() {
+    public static int getAvailableMemorySize() {
         SystemInfo systemInfo = new SystemInfo();
         long available = systemInfo.getHardware().getMemory().getAvailable();
         return (int) (available / (1024 * 1024));

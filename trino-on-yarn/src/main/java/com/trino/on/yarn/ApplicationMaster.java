@@ -31,8 +31,8 @@ import com.trino.on.yarn.executor.TrinoExecutorMaster;
 import com.trino.on.yarn.server.MasterServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
+import com.trino.on.yarn.util.OSUtil;
 import com.trino.on.yarn.util.ProcessUtil;
-import com.trino.on.yarn.util.SystemMXBeanUtil;
 import com.trino.on.yarn.util.YarnHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
@@ -384,14 +384,14 @@ public class ApplicationMaster {
 
         if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
             String clientLogApi = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
-            int freePhysicalMemorySize = SystemMXBeanUtil.getAvailablePhysicalMemorySize();
+            int freePhysicalMemorySize = OSUtil.getAvailableMemorySize();
             int memory = (int) (amMemory * 1.2);
             while (freePhysicalMemorySize < memory) {
                 String logStr = StrUtil.format(INSUFFICIENT_MEMORY, jobInfo.getIpMaster(), amMemory, freePhysicalMemorySize);
                 LOG.info(logStr);
                 HttpUtil.post(clientLogApi, logStr, 3000);
                 ThreadUtil.sleep(5000);
-                freePhysicalMemorySize = SystemMXBeanUtil.getAvailablePhysicalMemorySize();
+                freePhysicalMemorySize = OSUtil.getAvailableMemorySize();
             }
         }
         return true;
