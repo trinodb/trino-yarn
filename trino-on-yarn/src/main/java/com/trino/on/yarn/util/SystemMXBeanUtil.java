@@ -1,14 +1,12 @@
 package com.trino.on.yarn.util;
 
-import com.sun.management.OperatingSystemMXBean;
-
-import java.lang.management.ManagementFactory;
+import oshi.SystemInfo;
 
 public class SystemMXBeanUtil {
 
-    public static int getFreePhysicalMemorySize() {
-        OperatingSystemMXBean osmb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        long freePhysicalMemorySize = osmb.getFreePhysicalMemorySize();
-        return (int) (freePhysicalMemorySize / (1024 * 1024));
+    public static int getAvailablePhysicalMemorySize() {
+        SystemInfo systemInfo = new SystemInfo();
+        long available = systemInfo.getHardware().getMemory().getAvailable();
+        return (int) (available / (1024 * 1024));
     }
 }

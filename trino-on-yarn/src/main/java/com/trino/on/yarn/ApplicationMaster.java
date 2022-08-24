@@ -85,7 +85,7 @@ import static com.trino.on.yarn.constant.Constants.S_3_A;
 @InterfaceStability.Unstable
 public class ApplicationMaster {
 
-    private static final String INSUFFICIENT_MEMORY = "insufficient memory, Need to memory:{}MB, The remaining memory{}, waiting......";
+    private static final String INSUFFICIENT_MEMORY = "ip: {},insufficient memory, Need to memory: {}MB, The remaining memory: {}MB, waiting......";
     public static final int DEFAULT_APP_MASTER_TRACKING_URL_PORT = 8090;
     private static final Log LOG = LogFactory.getLog(ApplicationMaster.class);
     private static int amMemory = 128;
@@ -384,14 +384,14 @@ public class ApplicationMaster {
 
         if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
             String clientLogApi = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
-            int freePhysicalMemorySize = SystemMXBeanUtil.getFreePhysicalMemorySize();
+            int freePhysicalMemorySize = SystemMXBeanUtil.getAvailablePhysicalMemorySize();
             int memory = (int) (amMemory * 1.2);
             while (freePhysicalMemorySize < memory) {
-                String logStr = StrUtil.format(INSUFFICIENT_MEMORY, amMemory, freePhysicalMemorySize);
+                String logStr = StrUtil.format(INSUFFICIENT_MEMORY, jobInfo.getIpMaster(), amMemory, freePhysicalMemorySize);
                 LOG.info(logStr);
                 HttpUtil.post(clientLogApi, logStr, 3000);
                 ThreadUtil.sleep(5000);
-                freePhysicalMemorySize = SystemMXBeanUtil.getFreePhysicalMemorySize();
+                freePhysicalMemorySize = SystemMXBeanUtil.getAvailablePhysicalMemorySize();
             }
         }
         return true;

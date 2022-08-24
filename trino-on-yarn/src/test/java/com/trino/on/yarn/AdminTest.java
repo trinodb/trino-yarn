@@ -170,5 +170,14 @@ public class AdminTest {
         OperatingSystemMXBean osmb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         System.out.println(getFreePhysicalMemorySize(osmb));
         System.out.println(getTotalPhysicalMemorySize(osmb));
+
+
+        double totalvirtualMemory = osmb.getTotalPhysicalMemorySize();
+        double freePhysicalMemorySize = osmb.getFreePhysicalMemorySize();
+
+        System.out.println(totalvirtualMemory / 1024 / 1024);
+        System.out.println(freePhysicalMemorySize / 1024 / 1024);
+
+
     }
 }
