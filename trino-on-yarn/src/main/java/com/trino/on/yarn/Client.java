@@ -486,12 +486,15 @@ public class Client {
         String catalogHdfs = jobInfo.getCatalogHdfs();
         if (!jobInfo.isHdfsOrS3()) {
             if (FileUtil.isDirectory(catalogHdfs)) {
-                String zip = ZipUtil.zip(catalogHdfs).getAbsolutePath();
+                String zipPath = FileUtil.getParent(catalogHdfs, 1) + "/tmp/" + StrUtil.uuid() + "/";
+                FileUtil.mkdir(zipPath);
+                String zip = ZipUtil.zip(catalogHdfs, zipPath + JAVA_TRINO_CATALOG_PATH + ".zip").getAbsolutePath();
                 catalogHdfs = YarnHelper.put(appName, fs, zip, JAVA_TRINO_CATALOG_PATH + ".zip", appId.toString());
                 if (!StrUtil.startWith(catalogHdfs, HDFS)) {
                     catalogHdfs = HDFS + catalogHdfs;
                 }
                 jobInfo.setCatalog(catalogHdfs);
+                FileUtil.del(zip);
             }
         }
 
