@@ -227,7 +227,7 @@ public abstract class TrinoExecutor {
         List<String> catalogsNew = new ArrayList<>();
         for (String catalog : catalogs) {
             String properties = catalog + ".properties";
-            if (fileNames.contains(properties)) {
+            if (fileNames.contains(properties) || fileNames.contains("hive.properties")) {
                 catalogsNew.add(properties);
             } else {
                 throw new RuntimeException("catalog :" + catalog + " does not exist,please check the sql.");
