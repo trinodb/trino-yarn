@@ -54,8 +54,8 @@ public class Constants {
     public static final String TRINO_JVM = "jvm.config";
 
     public static final String TRINO_JVM_CONTENT =
-            "-Xmx{}m\n" +
-                    "-Xms{}m\n" +
+            "-Xms{}m\n" +
+                    "-Xmx{}m\n" +
                     "-XX:+UseG1GC\n" +
                     "-XX:G1HeapRegionSize=32M\n" +
                     "-XX:+ExplicitGCInvokesConcurrent\n" +
