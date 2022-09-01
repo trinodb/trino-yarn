@@ -141,7 +141,7 @@ public class Constants {
      * exchange.http-client.max-requests-queued-per-destination=5120
      * exchange.http-client.max-connections-per-server=5120
      */
-    public static final String TRINO_CONFIG_CONTENT = "coordinator=true\n" +
+    public static final String TRINO_CONFIG_CONTENT = "coordinator={}\n" +
             "node-scheduler.include-coordinator={}\n" +
             "discovery.uri=http://{}:{}\n" +
             "http-server.threads.max=500\n" +

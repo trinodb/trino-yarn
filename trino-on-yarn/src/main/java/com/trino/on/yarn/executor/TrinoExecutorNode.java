@@ -60,7 +60,7 @@ public class TrinoExecutorNode extends TrinoExecutor {
         int nodeMemory = amMemory / 3 * 2;
         int nodeTrinoPort = NetUtil.getUsableLocalPort();
         jobInfo.setNodeTrinoPort(nodeTrinoPort);
-        return StrUtil.format(TRINO_CONFIG_CONTENT, false, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
+        return StrUtil.format(TRINO_CONFIG_CONTENT, false, false, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
                 amMemory, nodeMemory, nodeMemory, NetUtil.getUsableLocalPort(), path);
     }
 }

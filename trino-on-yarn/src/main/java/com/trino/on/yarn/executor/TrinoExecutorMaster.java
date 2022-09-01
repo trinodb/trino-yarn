@@ -68,7 +68,7 @@ public class TrinoExecutorMaster extends TrinoExecutor {
             amMemory = amMemory / 2;
         }
         int nodeMemory = amMemory / 3 * 2;
-        return StrUtil.format(TRINO_CONFIG_CONTENT, true, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
+        return StrUtil.format(TRINO_CONFIG_CONTENT, true, true, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
                 amMemory, nodeMemory, nodeMemory, jobInfo.getPortTrino(), path);
     }
 }
