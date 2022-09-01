@@ -132,7 +132,7 @@ public abstract class TrinoExecutor {
         } else {
             put(".:" + jobInfo.getLibPath());
         }
-        String jvms = StrUtil.format(TRINO_JVM_CONTENT, amMemory);
+        String jvms = StrUtil.format(TRINO_JVM_CONTENT, amMemory, amMemory);
         for (String jvm : StrUtil.split(jvms, StrPool.LF)) {
             put(jvm);
         }
