@@ -57,6 +57,7 @@ public class TrinoExecutorNode extends TrinoExecutor {
 
     @Override
     protected String trinoConfig() {
+        int amMemory = super.amMemory / 10 * 9;
         int nodeMemory = amMemory / 3 * 2;
         int nodeTrinoPort = NetUtil.getUsableLocalPort();
         jobInfo.setNodeTrinoPort(nodeTrinoPort);
