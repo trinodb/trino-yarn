@@ -60,15 +60,16 @@ public class TrinoExecutorMaster extends TrinoExecutor {
 
     @Override
     protected String trinoConfig() {
+        boolean nodeSchedulerIncludeCoordinator = false;
         if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
             if (jobInfo.getNumTotalContainers() == 1) {
-                super.nodeSchedulerIncludeCoordinator = true;
+                nodeSchedulerIncludeCoordinator = true;
             }
         } else {
             amMemory = amMemory / 2;
         }
         int nodeMemory = amMemory / 3 * 2;
-        return StrUtil.format(TRINO_CONFIG_CONTENT, true, true, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
+        return StrUtil.format(TRINO_CONFIG_CONTENT, true, nodeSchedulerIncludeCoordinator, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
                 amMemory, nodeMemory, nodeMemory, jobInfo.getPortTrino(), path);
     }
 }
