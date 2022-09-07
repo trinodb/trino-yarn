@@ -60,6 +60,7 @@ public class TrinoExecutorMaster extends TrinoExecutor {
 
     @Override
     protected String trinoConfig() {
+        int amMemory = super.amMemory / 10 * 9;
         boolean nodeSchedulerIncludeCoordinator = false;
         if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
             if (jobInfo.getNumTotalContainers() == 1) {
