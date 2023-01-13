@@ -2,6 +2,8 @@ package com.trino.on.yarn.executor;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.text.StrBuilder;
+import cn.hutool.core.text.StrPool;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import org.apache.commons.logging.Log;
@@ -12,6 +14,7 @@ import java.util.List;
 
 public class TrinoJdbc {
     public static final String JDBC_TRINO = "jdbc:trino://{}:{}/hive";
+    private static final String CONNECTION_TEST_QUERY = "SELECT 1";
     protected static final Log LOG = LogFactory.getLog(TrinoJdbc.class);
 
     private static Connection connection = null;
@@ -19,40 +22,30 @@ public class TrinoJdbc {
     private static ResultSet resultSet = null;
 
     public static void run(String ip, Integer port, String email, String sqls) throws ClassNotFoundException, SQLException {
-
-
         try {
             Class.forName("io.trino.jdbc.TrinoDriver");
             if (StrUtil.isEmpty(email)) {
                 email = "root";
             }
             connection = DriverManager.getConnection(StrUtil.format(JDBC_TRINO, ip, port), email, null);
-
+            connectionTestQuery(connection);
             for (String sql : StrUtil.split(sqls, ";")) {
                 LOG.warn("execute sql:" + sql);
                 execute(connection, sql);
             }
         } finally {
             IoUtil.close(connection);
+            IoUtil.close(resultSet);
+            IoUtil.close(statement);
         }
     }
 
     public static void execute(Connection connection, String sql) throws SQLException {
         try {
-            IoUtil.close(resultSet);
-            IoUtil.close(statement);
             statement = connection.createStatement();
             boolean execute = statement.execute(sql);
             // TODO: 2022/7/27 这里可能会出现问题,暂不启用
             printResults(sql, execute);
-        } catch (SQLException e) {
-            String message = e.getMessage();
-            if (message.contains("initializing")) {
-                ThreadUtil.sleep(500);
-                execute(connection, sql);
-            } else {
-                throw e;
-            }
         } finally {
             IoUtil.close(resultSet);
             IoUtil.close(statement);
@@ -80,7 +73,8 @@ public class TrinoJdbc {
                 columns.add(md.getColumnName(i));
             }
 
-            System.out.println(StrUtil.join("  |  ", columns));
+            StrBuilder strBuilder = new StrBuilder(StrUtil.join("  |  ", columns));
+            strBuilder.append(StrPool.LF);
             int j = 0;
             while (resultSet.next() && j < 10) {//遍历查询结果，获取每一列字符串长度的最大值，保存在数组中
                 StringBuilder sb = new StringBuilder();
@@ -90,12 +84,31 @@ public class TrinoJdbc {
                         sb.append("  |  ");
                     }
                 }
-                System.out.println(sb);
+                strBuilder.append(sb.toString()).append(StrPool.LF);
                 j++;
             }
-            System.out.println("耗时：" + (System.currentTimeMillis() - start) + "ms");
+            strBuilder.append("耗时：" + (System.currentTimeMillis() - start) + "ms");
+            System.out.println(strBuilder);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void connectionTestQuery(Connection connection) {
+        try {
+            IoUtil.close(statement);
+            statement = connection.createStatement();
+            statement.execute(CONNECTION_TEST_QUERY);
+        } catch (SQLException e) {
+            String message = e.getMessage();
+            if (message.contains("initializing")) {
+                ThreadUtil.sleep(1000);
+                connectionTestQuery(connection);
+            } else {
+                throw new RuntimeException("connectionTestQuery failed!", e);
+            }
+        } finally {
+            IoUtil.close(statement);
         }
     }
 }

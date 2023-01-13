@@ -19,6 +19,7 @@ import cn.hutool.core.thread.GlobalThreadPool;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.http.server.SimpleServer;
 import cn.hutool.json.JSONUtil;
 import com.google.common.annotations.VisibleForTesting;
@@ -30,6 +31,8 @@ import com.trino.on.yarn.executor.TrinoExecutorMaster;
 import com.trino.on.yarn.server.MasterServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
+import com.trino.on.yarn.util.OSUtil;
+import com.trino.on.yarn.util.ProcessUtil;
 import com.trino.on.yarn.util.YarnHelper;
 import lombok.Data;
 import org.apache.commons.cli.*;
@@ -82,6 +85,7 @@ import static com.trino.on.yarn.constant.Constants.S_3_A;
 @InterfaceStability.Unstable
 public class ApplicationMaster {
 
+    private static final String INSUFFICIENT_MEMORY = "ip: {},insufficient memory, Need to memory: {}MB, The remaining memory: {}MB, waiting......";
     public static final int DEFAULT_APP_MASTER_TRACKING_URL_PORT = 8090;
     private static final Log LOG = LogFactory.getLog(ApplicationMaster.class);
     private static int amMemory = 128;
@@ -91,7 +95,7 @@ public class ApplicationMaster {
 
     static {
         RuntimeUtil.addShutdownHook(new Thread(() -> {
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec, jobInfo);
             GlobalThreadPool.shutdown(true);
         }));
     }
@@ -185,7 +189,7 @@ public class ApplicationMaster {
             LogManager.shutdown();
             ExitUtil.terminate(1, t);
         } finally {
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec, jobInfo);
         }
         if (result) {
             LOG.info("Application Master completed successfully. exiting");
@@ -301,7 +305,9 @@ public class ApplicationMaster {
         jobInfo.setPortMaster(simpleServer.getAddress().getPort());
         jobInfo.setPortTrino(NetUtil.getUsableLocalPort());
         jobInfo.setAmMemory(amMemory);
-
+        jobInfo.setHeartbeat("http://" + jobInfo.getIpMaster() + ":" + jobInfo.getPortMaster() + Server.MASTER_HEARTBEAT);
+        String absolutePath = new File(".").getAbsolutePath();
+        jobInfo.setAppId(YarnHelper.getYarnAppId(absolutePath));
         Map<String, String> envs = System.getenv();
 
         if (!envs.containsKey(Environment.CONTAINER_ID.name())) {
@@ -376,6 +382,18 @@ public class ApplicationMaster {
         }
         requestPriority = Integer.parseInt(cliParser.getOptionValue("priority", "0"));
 
+        if (RunType.YARN_PER.getName().equalsIgnoreCase(jobInfo.getRunType())) {
+            String clientLogApi = Server.formatUrl(Server.CLIENT_LOG, jobInfo.getIp(), jobInfo.getPort());
+            int freePhysicalMemorySize = OSUtil.getAvailableMemorySize();
+            int memory = (int) (amMemory * 1.2);
+            while (freePhysicalMemorySize < memory) {
+                String logStr = StrUtil.format(INSUFFICIENT_MEMORY, jobInfo.getIpMaster(), amMemory, freePhysicalMemorySize);
+                LOG.info(logStr);
+                HttpUtil.post(clientLogApi, logStr, 3000);
+                ThreadUtil.sleep(5000);
+                freePhysicalMemorySize = OSUtil.getAvailableMemorySize();
+            }
+        }
         return true;
     }
 
@@ -552,7 +570,7 @@ public class ApplicationMaster {
         }
 
         amRMClient.stop();
-        RuntimeUtil.destroy(exec);
+        ProcessUtil.killPid(exec, jobInfo);
 
         return success;
     }
@@ -784,7 +802,7 @@ public class ApplicationMaster {
         @Override
         public void onShutdownRequest() {
             done = true;
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec, jobInfo);
         }
 
         @Override
@@ -801,7 +819,7 @@ public class ApplicationMaster {
         @Override
         public void onError(Throwable e) {
             done = true;
-            RuntimeUtil.destroy(exec);
+            ProcessUtil.killPid(exec, jobInfo);
             amRMClient.stop();
         }
     }
@@ -919,6 +937,8 @@ public class ApplicationMaster {
             // Set am memory size
             vargs.add("-Xms" + containerMemory + "m");
             vargs.add("-Xmx" + containerMemory + "m");
+            vargs.add("-Duser.language=zh");
+            vargs.add("-Dfile.encoding=utf-8");
             vargs.add(javaOpts);
 
             // Set tmp dir

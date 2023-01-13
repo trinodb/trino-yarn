@@ -28,6 +28,7 @@ import com.trino.on.yarn.entity.JobInfo;
 import com.trino.on.yarn.server.ClientServer;
 import com.trino.on.yarn.server.Server;
 import com.trino.on.yarn.util.Log4jPropertyHelper;
+import com.trino.on.yarn.util.ProcessUtil;
 import com.trino.on.yarn.util.YarnHelper;
 import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
@@ -220,7 +221,7 @@ public class Client {
      * @return Whether the init was successful to run the client
      * @throws ParseException
      */
-    public boolean init(String[] args) throws ParseException {
+    public boolean init(String[] args) throws ParseException, IOException {
         CommandLineParser gnuParser = new GnuParser();
         CommandLine cliParser = gnuParser.parse(opts, args);
         if (args.length == 0) {
@@ -335,11 +336,15 @@ public class Client {
         } else
             throw new IllegalArgumentException("job_info isBlank/is not JSONObject");
 
-        LOG.warn("jobInfo:" + jobInfo);
-
         if (StrUtil.isNotBlank(jobInfo.getUser())) {
+            String mkdirStr = "hdfs dfs -mkdir /user/{}";
+            String chownStr = "hdfs dfs -chown -R {} /user/{}";
+            ProcessUtil.exec(StrUtil.format(mkdirStr, jobInfo.getUser()));
+            ProcessUtil.exec(StrUtil.format(chownStr, jobInfo.getUser(), jobInfo.getUser()));
             System.setProperty("HADOOP_USER_NAME", jobInfo.getUser());
         }
+
+        LOG.warn("jobInfo:" + jobInfo);
 
         simpleServer = ClientServer.initClient();
         InetSocketAddress inetSocketAddress = simpleServer.getAddress();
@@ -459,6 +464,7 @@ public class Client {
         // Copy the application master jar to the filesystem
         // Create a local resource to point to the destination jar path
         FileSystem fs = FileSystem.get(conf);
+
         Path dst = YarnHelper.addToLocalResources(appName, fs, appMasterJar, Constants.APP_MASTER_JAR_PATH, appId.toString(), localResources, null);
 
         YarnHelper.addFrameworkToDistributedCache(dst.toUri().toString(), localResources, conf);
@@ -480,12 +486,15 @@ public class Client {
         String catalogHdfs = jobInfo.getCatalogHdfs();
         if (!jobInfo.isHdfsOrS3()) {
             if (FileUtil.isDirectory(catalogHdfs)) {
-                String zip = ZipUtil.zip(catalogHdfs).getAbsolutePath();
+                String zipPath = FileUtil.getParent(catalogHdfs, 1) + "/tmp/" + StrUtil.uuid() + "/";
+                FileUtil.mkdir(zipPath);
+                String zip = ZipUtil.zip(catalogHdfs, zipPath + JAVA_TRINO_CATALOG_PATH + ".zip").getAbsolutePath();
                 catalogHdfs = YarnHelper.put(appName, fs, zip, JAVA_TRINO_CATALOG_PATH + ".zip", appId.toString());
                 if (!StrUtil.startWith(catalogHdfs, HDFS)) {
                     catalogHdfs = HDFS + catalogHdfs;
                 }
                 jobInfo.setCatalog(catalogHdfs);
+                FileUtil.del(zip);
             }
         }
 
@@ -539,6 +548,8 @@ public class Client {
         vargs.add(System.getenv("JAVA_HOME") + "/bin/java");
         // Set Xmx based on am memory size
         vargs.add("-Xmx" + amMemory + "m");
+        vargs.add("-Duser.language=zh");
+        vargs.add("-Dfile.encoding=utf-8");
         // Set class name
         vargs.add(appMasterMainClass);
         // Set params for Application Master

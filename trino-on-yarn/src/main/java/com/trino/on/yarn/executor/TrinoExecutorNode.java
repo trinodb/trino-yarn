@@ -4,7 +4,6 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.thread.ThreadUtil;
-import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.trino.on.yarn.entity.JobInfo;
 
@@ -21,6 +20,14 @@ public class TrinoExecutorNode extends TrinoExecutor {
     @Override
     protected void log(Process exec) throws InterruptedException {
         ThreadUtil.execAsync(() -> {
+                    ThreadUtil.sleep(1000 * 60);
+                    if (!endStart) {
+                        endStart = true;
+                        end();
+                    }
+                }
+        );
+        ThreadUtil.execAsync(() -> {
             InputStream inputStream = exec.getInputStream();
             IoUtil.readUtf8Lines(inputStream, (LineHandler) line -> {
                 if (StrUtil.contains(line, "======== SERVER STARTED ========") ||
@@ -30,6 +37,7 @@ public class TrinoExecutorNode extends TrinoExecutor {
                         end();
                     }
                 }
+
                 LOG.info(line);
             });
             try {
@@ -42,7 +50,6 @@ public class TrinoExecutorNode extends TrinoExecutor {
                 throw new RuntimeException("job error", e);
             } finally {
                 IoUtil.close(inputStream);
-                RuntimeUtil.destroy(exec);
             }
         });
 
@@ -50,8 +57,11 @@ public class TrinoExecutorNode extends TrinoExecutor {
 
     @Override
     protected String trinoConfig() {
+        int amMemory = super.amMemory / 10 * 9;
         int nodeMemory = amMemory / 3 * 2;
-        return StrUtil.format(TRINO_CONFIG_CONTENT, false, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
+        int nodeTrinoPort = NetUtil.getUsableLocalPort();
+        jobInfo.setNodeTrinoPort(nodeTrinoPort);
+        return StrUtil.format(TRINO_CONFIG_CONTENT, false, false, jobInfo.getIpMaster(), jobInfo.getPortTrino(),
                 amMemory, nodeMemory, nodeMemory, NetUtil.getUsableLocalPort(), path);
     }
 }

@@ -22,7 +22,7 @@ import static com.trino.on.yarn.constant.Constants.*;
 
 @Data
 public class JobInfo {
-
+    private String appId;
     private String jdk11Home;
     private String sql;
     private String path;
@@ -34,6 +34,7 @@ public class JobInfo {
     private boolean node;
     private String ipNode;
     private int portNode;
+    private int nodeTrinoPort;
     private int portTrino;
     private boolean test;
     private boolean debug;
@@ -42,6 +43,7 @@ public class JobInfo {
     private int numTotalContainers;
     private int amMemory;
     private boolean start;
+    private String heartbeat;
 
     public String getPluginPath() {
         return path + "/plugin";

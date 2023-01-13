@@ -13,6 +13,7 @@
  */
 package com.trino.on.yarn.util;
 
+import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import com.trino.on.yarn.constant.Constants;
 import org.apache.commons.io.IOUtils;
@@ -40,7 +41,18 @@ import static com.trino.on.yarn.constant.Constants.S_3_A;
  */
 public class YarnHelper {
 
+    private static final String YARN_APP_ID_PARSE_REGEX = "(application_\\d{13}_\\d+)";
+
     private static final Log LOG = LogFactory.getLog(YarnHelper.class);
+
+    /**
+     * 获取yarn app id
+     *
+     * @param content
+     */
+    public static String getYarnAppId(String content) {
+        return ReUtil.extractMulti(YARN_APP_ID_PARSE_REGEX, content, "$1");
+    }
 
     public static String buildClassPathEnv(Configuration conf) {
         StringBuilder classPathEnv = new StringBuilder(ApplicationConstants.Environment.CLASSPATH.$$())
